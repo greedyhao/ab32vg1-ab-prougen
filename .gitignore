@@ -5,6 +5,7 @@
 *.pyc
 *.elf
 *.old
+*.o
 
 build
 dist
