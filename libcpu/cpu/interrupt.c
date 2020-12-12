@@ -37,6 +37,20 @@ void cpu_irq_comm_do(void)
 	}
 }
 
+void rt_hw_irq_enable(int vector)
+{
+    if (vector < IRQ_TOTAL_NUM) {
+        PICEN |= BIT(vector);
+    }
+}
+
+void rt_hw_irq_disable(int vector)
+{
+    if (vector < IRQ_TOTAL_NUM) {
+        PICEN &= ~BIT(vector);
+    }
+}
+
 void rt_hw_interrupt_init(void)
 {
 }
@@ -58,7 +72,7 @@ rt_isr_handler_t rt_hw_interrupt_install(int              vector,
     rt_isr_handler_t old_handler = RT_NULL;
 
     if (vector < IRQ_TOTAL_NUM) {
-        uint32_t cpu_ie = PICCON&BIT(0);
+        uint32_t cpu_ie = PICCON & BIT(0);
         PICCON &= ~BIT(0);
         old_handler = tbl_irq_vector[vector];
         tbl_irq_vector[vector] = handler;
