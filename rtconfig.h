@@ -154,9 +154,18 @@
 /* games: games run on RT-Thread console */
 
 
-/* General Purpose UARTs */
+/* Hardware Drivers Config */
+
+/* Onboard Peripheral Drivers */
+
+#define BSP_USING_USB_TO_USART
+
+/* On-chip Peripheral Drivers */
 
 #define BSP_USING_UART0
+
+/* Board extended module Drivers */
+
 #define BOARD_BLUETRUM_EVB
 
 #endif
