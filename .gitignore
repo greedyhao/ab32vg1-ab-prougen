@@ -2,6 +2,7 @@
 *.bin
 *.dcf
 *.map
+*.lst
 *.pyc
 *.elf
 *.old
