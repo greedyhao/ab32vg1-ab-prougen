@@ -80,6 +80,10 @@
 #define RT_USING_SERIAL
 #define RT_SERIAL_RB_BUFSZ 64
 #define RT_USING_PIN
+#define RT_USING_AUDIO
+#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 4096
+#define RT_AUDIO_REPLAY_MP_BLOCK_COUNT 2
+#define RT_AUDIO_RECORD_PIPE_SIZE 2048
 
 /* Using USB */
 
@@ -163,6 +167,8 @@
 /* On-chip Peripheral Drivers */
 
 #define BSP_USING_UART0
+#define BSP_USING_AUDIO
+#define BSP_USING_AUDIO_PLAY
 
 /* Board extended module Drivers */
 
