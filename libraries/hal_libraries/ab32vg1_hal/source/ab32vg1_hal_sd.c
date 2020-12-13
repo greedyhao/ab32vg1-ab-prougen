@@ -24,20 +24,6 @@
 #define RSP_BUSY_TIMEOUT            2400000     //大约2s
 #define RSP_TIMEOUT                 6000        //大约5ms
 
-enum
-{
-    SDCON = 0, /* [20]:BUSY [19:17]:CRCS [16]:DCRCE [15]:NRPS [1]:Data bus width [0]:SD enable */
-    SDCPND,
-    SDBAUD,
-    SDCMD,
-    SDARG3,
-    SDARG2,
-    SDARG1,
-    SDARG0,
-    SDDMAADR,
-    SDDMACNT,
-};
-
 uint8_t sysclk_update_baud(uint8_t baud);
 
 void sdio_setbaud(hal_sfr_t sdiox, uint8_t baud)

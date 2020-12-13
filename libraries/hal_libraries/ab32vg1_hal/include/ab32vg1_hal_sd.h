@@ -73,6 +73,8 @@ enum
 
 #define SDMMC_CHECK_PATTERM         (0x000001AAu)
 
+#define SDMMC0_BASE     ((hal_sfr_t)&SD0CON)
+
 /* Initialization functions */
 hal_error_t hal_sd_init(sd_handle_t hsd);
 void hal_sd_deinit(uint32_t sdx);
@@ -80,7 +82,7 @@ void hal_sd_mspinit(sd_handle_t hsd);
 
 hal_error_t hal_sd_control(uint32_t control, uint32_t arg);
 void hal_sd_write(uint32_t sdx, uint32_t data);
-uint32_t hal_sd_read(uint32_t sdx);
+bool hal_sd_read(sd_handle_t hsd, void *buf, uint32_t lba);
 // void hal_uart_write_it(uint32_t uartx, uint8_t data);
 // uint8_t hal_uart_read_it(uint32_t uartx);
 
