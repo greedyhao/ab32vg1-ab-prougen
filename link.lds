@@ -29,6 +29,7 @@ SECTIONS
         *(.com_text*)
         *(.text*)
         *(.rodata*)
+        *(.srodata*)
         *(.com_rodata*)
         *(.rela*)
         *(.data*)
