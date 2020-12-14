@@ -20,7 +20,7 @@ typedef struct _sys_t {
     uint32_t uart0baud;          //UART0BAUD
 } sys_t;
 
-AT(.sys_text.clk.table)
+AT(.text.sys_clk.table)
 const uint8_t sysclk_sel_tbl[] = {
     OSCDIV_2M,          //SYS_2M
     PLL0DIV_12M,        //SYS_12M
@@ -34,7 +34,7 @@ const uint8_t sysclk_sel_tbl[] = {
     PLL0DIV_120M,       //SYS_120M
 };
 
-AT(.sys_text.clk.table)
+AT(.text.sys_clk.table)
 const uint8_t sysclk_index[] = {
     2,
     12,
@@ -59,24 +59,24 @@ static void delay_us(uint16_t nus)
    }
 }
 
-AT(.sys_text.clk)
+AT(.text.sys_clk)
 uint8_t get_clksel_val(uint8_t val)
 {
     return sysclk_sel_tbl[val];
 }
 
-AT(.sys_text.clk)
+AT(.text.sys_clk)
 uint8_t get_cur_sysclk(void)
 {
     return sys.sys_clk;
 }
 
-AT(.sys_text.clk)
 uint32_t get_sysclk_nhz(void)
 {
     return sysclk_index[sys.sys_clk] * 1000000;
 }
 
+////AT(.com_text.set_flash_safety)
 //static ALWAYS_INLINE void set_flash_safety(uint32_t sys_clk)
 //{
 //    SPI0CON |= BIT(10);
@@ -89,13 +89,13 @@ uint32_t get_sysclk_nhz(void)
 //    }
 //}
 
-AT(.sys_text.clk)
+AT(.text.sys_clk)
 uint8_t get_sd_rate(void)
 {
     return 0;  //unit: M
 }
 
-AT(.sys_text.clk)
+AT(.text.sys_clk)
 uint8_t set_sd_baud(uint8_t sd_rate)
 {
     uint8_t sd0baud=0;
@@ -121,7 +121,6 @@ uint8_t set_sd_baud(uint8_t sd_rate)
     return sd0baud;
 }
 
-AT(.sys_text.clk)
 void update_sd0baud(void)
 {
     if (!(SD0CON & BIT(0))) {
@@ -148,7 +147,7 @@ void update_sd0baud(void)
     }
 }
 
-AT(.sys_text.clk)
+AT(.text.sys_clk)
 uint8_t sysclk_update_baud(uint8_t baud)
 {
     uint8_t sd_rate=get_sd_rate();
@@ -167,7 +166,6 @@ uint8_t sysclk_update_baud(uint8_t baud)
 }
 
 //客户可能用到UART0(使用26M时钟源)做通信,这里可选设置系统时钟时不改波特率
-AT(.sys_text.clk)
 WEAK void update_uart0baud_in_sysclk(uint32_t uart_baud)
 {
     if(UART0CON & BIT(0)) {
@@ -176,7 +174,6 @@ WEAK void update_uart0baud_in_sysclk(uint32_t uart_baud)
     UART0BAUD = (uart_baud << 16) | uart_baud;
 }
 
-AT(.sys_text.clk)
 void set_sys_uart0baud(uint32_t baud)
 {
     sys.uart0baud = baud;
@@ -213,7 +210,6 @@ void set_peripherals_clkdiv_safety(void)
 }
 
 //根据实际系统时钟，设置合适的模块时钟分频
-AT(.sys_text.clk)
 void set_peripherals_clkdiv(void)
 {
     uint32_t clkcon3 = CLKCON3;
@@ -315,7 +311,6 @@ static void set_sysclk_do(uint32_t sys_clk, uint32_t clk_sel, uint32_t spll_div,
     PICCON |= cpu_ie;
 }
 
-AT(.sys_text.clk)
 void set_sysclk(uint32_t sys_clk)
 {
     uint32_t uart_baud, spll_div = 0, spi_baud = 0, spi1baud;

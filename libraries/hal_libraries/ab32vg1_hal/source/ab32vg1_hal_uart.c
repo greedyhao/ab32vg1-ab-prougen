@@ -22,7 +22,6 @@ enum
  * @param uartx This parameter can be UARTxN where x can be (0.2).
  * @param baud Baud rate.
  */
-AT(.drv_text.uart)
 void hal_uart_setbaud(hal_sfr_t uartx, uint32_t baud)
 {
     uint32_t baud_cfg;
@@ -38,7 +37,6 @@ void hal_uart_setbaud(hal_sfr_t uartx, uint32_t baud)
  * @param huart UART handle.
  * @return hal_error_t 
  */
-AT(.drv_text.uart)
 hal_error_t hal_uart_init(struct uart_handle *huart)
 {
     if (huart == HAL_NULL) {
@@ -56,7 +54,6 @@ hal_error_t hal_uart_init(struct uart_handle *huart)
  * 
  * @param uartx This parameter can be UARTxN where x can be (0.2).
  */
-AT(.drv_text.uart)
 void hal_uart_deinit(hal_sfr_t uartx)
 {
     uartx[UARTxCON] = 0;
@@ -87,7 +84,6 @@ WEAK void HAL_UART_MspInit(struct uart_handle *huart)
  *      @arg HAL_DISABLE
  *      @arg HAL_ENABLE
  */
-AT(.drv_text.uart)
 void hal_uart_control(hal_sfr_t uartx, uint32_t cntl, uint32_t param)
 {
     if (param == HAL_ENABLE) {
@@ -103,7 +99,6 @@ void hal_uart_control(hal_sfr_t uartx, uint32_t cntl, uint32_t param)
  * @param uartx This parameter can be UARTxN where x can be (0.2).
  * @param data The characters that need to be sent
  */
-AT(.drv_text.uart)
 void hal_uart_write(hal_sfr_t uartx, uint8_t data)
 {
     uartx[UARTxDATA] = data;
@@ -115,7 +110,6 @@ void hal_uart_write(hal_sfr_t uartx, uint8_t data)
  * @param uartx This parameter can be UARTxN where x can be (0.2).
  * @return uint8_t Received character.
  */
-AT(.drv_text.uart)
 uint8_t hal_uart_read(hal_sfr_t uartx)
 {
     return (uartx[UARTxDATA] & 0xff);
@@ -130,7 +124,6 @@ uint8_t hal_uart_read(hal_sfr_t uartx)
  *      @arg UART_FLAG_TXPND
  * @return uint32_t 
  */
-AT(.drv_text.uart)
 uint32_t hal_uart_getflag(hal_sfr_t uartx, uint32_t flag)
 {
     uint32_t ret = uartx[UARTxCON] & flag;
@@ -145,7 +138,6 @@ uint32_t hal_uart_getflag(hal_sfr_t uartx, uint32_t flag)
  *      @arg UART_FLAG_RXPND
  *      @arg UART_FLAG_TXPND
  */
-AT(.drv_text.uart)
 void hal_uart_clrflag(hal_sfr_t uartx, uint32_t flag)
 {
     uartx[UARTxCPND] |= flag;
@@ -156,7 +148,6 @@ void hal_uart_clrflag(hal_sfr_t uartx, uint32_t flag)
  * 
  * @param huart UART handle.
  */
-AT(.drv_text.uart)
 void uart_config_all(struct uart_handle *huart)
 {
     hal_uart_control(huart->instance, UART_MODULE_ENABLE, HAL_DISABLE);
