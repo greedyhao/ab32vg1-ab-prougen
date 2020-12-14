@@ -22,7 +22,6 @@ void set_cpu_irq_comm(void (*irq_hook)(void))
     cpu_irq_comm_hook = irq_hook;
 }
 
-AT(.com_text.irq)
 void cpu_irq_comm_do(void)
 {
 	void (*pfnct)(void);

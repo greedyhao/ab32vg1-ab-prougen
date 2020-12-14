@@ -35,10 +35,11 @@ static struct ab32_uart_config uart_config[] =
         .name = "uart1",
         .instance = UART1_BASE,
     }
-};
+} ;
 
 static struct ab32_uart uart_obj[sizeof(uart_config) / sizeof(uart_config[0])] = {0};
 
+AT(.drv_text.uart)
 static rt_err_t ab32_configure(struct rt_serial_device *serial, struct serial_configure *cfg)
 {
     struct ab32_uart *uart;
@@ -85,6 +86,7 @@ static rt_err_t ab32_configure(struct rt_serial_device *serial, struct serial_co
     return RT_EOK;
 }
 
+AT(.drv_text.uart)
 static rt_err_t ab32_control(struct rt_serial_device *serial, int cmd, void *arg)
 {
     struct ab32_uart *uart;
@@ -114,6 +116,7 @@ static rt_err_t ab32_control(struct rt_serial_device *serial, int cmd, void *arg
     return RT_EOK;
 }
 
+AT(.drv_text.uart)
 static int ab32_putc(struct rt_serial_device *serial, char ch)
 {
     struct ab32_uart *uart;
@@ -127,6 +130,7 @@ static int ab32_putc(struct rt_serial_device *serial, char ch)
     return 1;
 }
 
+AT(.drv_text.uart)
 static int ab32_getc(struct rt_serial_device *serial)
 {
     int ch;
@@ -143,11 +147,13 @@ static int ab32_getc(struct rt_serial_device *serial)
     return ch;
 }
 
+AT(.drv_text.uart)
 static rt_size_t ab32_dma_transmit(struct rt_serial_device *serial, rt_uint8_t *buf, rt_size_t size, int direction)
 {
     return -1;
 }
 
+AT(.drv_text.uart)
 static void uart_isr(int vector, void *param)
 {
     rt_interrupt_enter();
@@ -173,6 +179,7 @@ static const struct rt_uart_ops ab32_uart_ops =
     .dma_transmit = ab32_dma_transmit
 };
 
+AT(.drv_text.uart)
 int rt_hw_usart_init(void)
 {
     rt_size_t obj_num = sizeof(uart_obj) / sizeof(struct ab32_uart);
