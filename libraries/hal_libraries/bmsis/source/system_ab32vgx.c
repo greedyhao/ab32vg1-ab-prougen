@@ -20,7 +20,6 @@ typedef struct _sys_t {
     uint32_t uart0baud;          //UART0BAUD
 } sys_t;
 
-AT(.text.sys_clk.table)
 const uint8_t sysclk_sel_tbl[] = {
     OSCDIV_2M,          //SYS_2M
     PLL0DIV_12M,        //SYS_12M
@@ -34,7 +33,6 @@ const uint8_t sysclk_sel_tbl[] = {
     PLL0DIV_120M,       //SYS_120M
 };
 
-AT(.text.sys_clk.table)
 const uint8_t sysclk_index[] = {
     2,
     12,
@@ -59,13 +57,11 @@ static void delay_us(uint16_t nus)
    }
 }
 
-AT(.text.sys_clk)
 uint8_t get_clksel_val(uint8_t val)
 {
     return sysclk_sel_tbl[val];
 }
 
-AT(.text.sys_clk)
 uint8_t get_cur_sysclk(void)
 {
     return sys.sys_clk;
@@ -89,13 +85,11 @@ uint32_t get_sysclk_nhz(void)
 //    }
 //}
 
-AT(.text.sys_clk)
 uint8_t get_sd_rate(void)
 {
     return 0;  //unit: M
 }
 
-AT(.text.sys_clk)
 uint8_t set_sd_baud(uint8_t sd_rate)
 {
     uint8_t sd0baud=0;
@@ -147,7 +141,6 @@ void update_sd0baud(void)
     }
 }
 
-AT(.text.sys_clk)
 uint8_t sysclk_update_baud(uint8_t baud)
 {
     uint8_t sd_rate=get_sd_rate();
