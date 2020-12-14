@@ -3,16 +3,16 @@ __max_flash_size = 768k;
 
 __base = 0x10000000;
 
-__comm_vma = 0x17000;
-__max_comm_size = 76k;
+__comm_vma = 0x16000;
+__max_comm_size = 104k;
 
 MEMORY
 {
     init            : org = __base,             len = 512
     flash(rx)       : org = __base + 512,       len = __max_flash_size
     comm(rx)        : org = __comm_vma,         len = __max_comm_size
-    data            : org = 0x11000,            len = 16k
-    stack           : org = 0x15000,            len = 8k
+    data            : org = 0x10000,            len = 16k
+    stack           : org = 0x14000,            len = 8k
     aram            : org = 0x50000,            len = 16k
     dram            : org = 0x54000,            len = 12k
     eram            : org = 0x57000,            len = 0xa00
