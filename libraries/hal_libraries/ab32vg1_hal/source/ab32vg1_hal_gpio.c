@@ -14,6 +14,7 @@
 #define HAL_LOG(...)
 #endif
 
+AT(.drv_text.gpio)
 void gpio_afinit(hal_sfr_t gpiox, uint8_t pin, uint32_t alternate, uint32_t af_con)
 {
     uint32_t is_rx_map_tx = (alternate & UT1RXMAP_TX) || (alternate & UT0RXMAP_TX);
@@ -44,6 +45,7 @@ void gpio_afinit(hal_sfr_t gpiox, uint8_t pin, uint32_t alternate, uint32_t af_c
  * @param port GPIO port(GPIOAN, GPIOBN, GPIOEN, GPIOFN).
  * @param gpio_init the configuration of the specified GPIO peripheral.
  */
+AT(.drv_text.gpio)
 void hal_gpio_init(hal_sfr_t gpiox, gpio_init_t gpio_init)
 {
     uint8_t iocurrent = 0;
@@ -110,6 +112,7 @@ void hal_gpio_init(hal_sfr_t gpiox, gpio_init_t gpio_init)
  * @param pin This parameter can be GPIO_PIN_x where x can be (0.15).
  * @return uint8_t The input port pin value.
  */
+AT(.drv_text.gpio)
 uint8_t hal_gpio_read(hal_sfr_t gpiox, uint8_t pin)
 {
     return ((gpiox[GPIOx] & BIT(pin)) != GPIO_PIN_LOW) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
@@ -124,6 +127,7 @@ uint8_t hal_gpio_read(hal_sfr_t gpiox, uint8_t pin)
  *          @arg GPIO_PIN_LOW:
  *          @arg GPIO_PIN_HIGH:
  */
+AT(.drv_text.gpio)
 void hal_gpio_write(hal_sfr_t gpiox, uint8_t pin, uint8_t state)
 {
     if (state == GPIO_PIN_LOW) {
@@ -139,6 +143,7 @@ void hal_gpio_write(hal_sfr_t gpiox, uint8_t pin, uint8_t state)
  * @param port GPIO port(GPIOAN, GPIOBN, GPIOEN, GPIOFN).
  * @param pin This parameter can be GPIO_PIN_x where x can be (0.15).
  */
+AT(.drv_text.gpio)
 void hal_gpio_toggle(hal_sfr_t gpiox, uint8_t pin)
 {
     gpiox[GPIOx] ^= BIT(pin);
