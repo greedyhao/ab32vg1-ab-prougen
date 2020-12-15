@@ -156,7 +156,6 @@
 
 /* MultiButton Options */
 
-#define MULTIBUTTON_USING_EXAMPLE_ASYNC
 
 /* samples: kernel and components samples */
 
