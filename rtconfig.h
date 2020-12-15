@@ -19,6 +19,7 @@
 #define RT_USING_TIMER_SOFT
 #define RT_TIMER_THREAD_PRIO 4
 #define RT_TIMER_THREAD_STACK_SIZE 512
+#define RT_DEBUG
 
 /* Inter-Thread communication */
 
@@ -71,11 +72,6 @@
 
 /* Device virtual file system */
 
-#define RT_USING_DFS
-#define DFS_FILESYSTEMS_MAX 2
-#define DFS_FILESYSTEM_TYPES_MAX 2
-#define DFS_FD_MAX 16
-#define RT_USING_DFS_DEVFS
 
 /* Device Drivers */
 
@@ -85,9 +81,9 @@
 #define RT_SERIAL_RB_BUFSZ 64
 #define RT_USING_PIN
 #define RT_USING_AUDIO
-#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 4096
+#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 1024
 #define RT_AUDIO_REPLAY_MP_BLOCK_COUNT 2
-#define RT_AUDIO_RECORD_PIPE_SIZE 2048
+#define RT_AUDIO_RECORD_PIPE_SIZE 512
 
 /* Using USB */
 
@@ -95,7 +91,6 @@
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
-#define RT_USING_POSIX
 
 /* Network */
 
@@ -156,6 +151,12 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_MULTIBUTTON
+#define PKG_USING_MULTIBUTTON_V102
+
+/* MultiButton Options */
+
+#define MULTIBUTTON_USING_EXAMPLE_ASYNC
 
 /* samples: kernel and components samples */
 

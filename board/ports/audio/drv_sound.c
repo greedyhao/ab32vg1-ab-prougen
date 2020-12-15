@@ -9,20 +9,23 @@
 
 #include <board.h>
 
-// #define DBG_TAG              "drv.snd_dev"
-// #define DBG_LVL              DBG_INFO
-// #include <rtdbg.h>
-#define LOG_D(...) rt_kprintf(__VA_ARGS__)
-#define LOG_I(...) rt_kprintf(__VA_ARGS__)
-#define LOG_E(...) rt_kprintf(__VA_ARGS__)
+#define DBG_TAG              "drv.snd_dev"
+#define DBG_LVL              DBG_INFO
+#include <rtdbg.h>
+// #define LOG_D(...) rt_kprintf(__VA_ARGS__)
+// #define LOG_I(...) rt_kprintf(__VA_ARGS__)
+// #define LOG_E(...) rt_kprintf(__VA_ARGS__)
 
-#define TX_FIFO_SIZE         (2048)
+#define SAI_AUDIO_FREQUENCY_44K         ((uint32_t)44100u)
+#define SAI_AUDIO_FREQUENCY_48K         ((uint32_t)48000u)
+#define TX_FIFO_SIZE         (1024)
 
 struct sound_device
 {
     struct rt_audio_device audio;
     struct rt_audio_configure replay_config;
     rt_uint8_t *tx_fifo;
+    rt_sem_t sem;
     rt_uint8_t volume;
 };
 
@@ -44,6 +47,116 @@ static struct sound_device snd_dev = {0};
 //     //     }
 //     // }
 // }
+
+//apll = 采样率*ADPLL_DIV*512
+//audio pll init
+void adpll_init(uint8_t out_spr)
+{
+    PLL1CON &= ~(BIT(16) | BIT(17));                //PLL1 refclk select xosc26m
+    CLKCON2  &= ~(BIT(4)| BIT(5) | BIT(6) | BIT(7));
+
+    PLL1CON &= ~(BIT(3) | BIT(4) | BIT(5));
+    PLL1CON |= BIT(3);                              //Select PLL/VCO frequency band (PLL大于206M vcos = 0x01, 否则为0)
+
+    PLL1CON |= BIT(12);                             //enable pll1 ldo
+    hal_mdelay(1);
+    PLL1CON |= BIT(18);                             //pll1 sdm enable
+
+    if (out_spr) {
+        CLKCON2  |= BIT(4) | BIT(7);                 //adpll_div = 10
+        PLL1DIV = (245.76 * 65536) / 26;            //245.76Mhz for 48K
+        // sys.aupll_type = 1;
+    } else {
+        CLKCON2  |= BIT(5) | BIT(7);                 //adpll_div = 11
+        PLL1DIV = (248.3712 * 65536) / 26;          //248.3712MHz for 44.1k
+        // sys.aupll_type = 0;
+    }
+    hal_mdelay(1);
+    PLL1CON |= BIT(20);                             //update pll1div
+    PLL1CON |= BIT(6);                              //enable analog pll1
+    hal_mdelay(1);                                 //wait pll1 stable
+}
+
+void dac_start(void)
+{
+    AUANGCON0 |= BIT(0) | BIT(1) | BIT(3); // bg ldoh bias enable
+
+    AUANGCON0 &= ~(BIT(6)|BIT(5)|BIT(4));  // LDOH voltage select：3bit
+    AUANGCON0 |= (3<<4); // 2.4/2.5/2.7/2.9/3.1/3.2
+
+    AUANGCON0 |= BIT(2);           // LDOL enable
+
+    AUANGCON0 |= BIT(9); //VCM enable
+    AUANGCON0 &= ~(BIT(13)|BIT(12)); // VCM voltage select, 2bit
+    AUANGCON0 |= (2<<12);
+
+    AUANGCON0 |= BIT(15) | BIT(16) | BIT(17) | BIT(18); // d2a lpf audpa audpa_dly
+
+    AUANGCON0 &= ~BIT(11); //VCM type: 0-->res divider with off-chip cap; 1-->internal VCM
+    //AUANGCON0 |= BIT(11);
+
+    AUANGCON0 &= ~BIT(19); // dac type: 0-->SC; 1-->SR
+    //AUANGCON0 |= BIT(19);
+
+    AUANGCON0 |= BIT(20); // pa type: 0-->diff; 1-->3.3V single
+
+    AUANGCON3 &= ~(0x7<<4); //BIT[6:4]=PA_GF[2:0]
+    AUANGCON3 |= (0<<4);
+    AUANGCON3 &= ~(0xf); //BIT[3:0]=PA_GX[3:0]
+    AUANGCON3 |= 0;
+
+    AUANGCON3 &= ~(0xF<<8); //BIT[11:8]=PA2_GX[3:0]
+    AUANGCON3 |= (0<<8);
+    AUANGCON3 &= ~(0x7<<12); //BIT[14:12]=PA2_GF[2:0]
+    AUANGCON3 |= (0<<12);
+
+    AUANGCON1 |= BIT(0) | BIT(1); // dac enable: BIT(0)-->right channel; BIT(1)-->left channel
+    //AUANGCON1 &= ~BIT(1); //disable left channel
+
+    AUANGCON1 |= BIT(12); // lpf2pa enable
+
+    AUANGCON1 &= ~BIT(29); // vcmbuf enable: 0-->disable
+    //AUANGCON1 |= BIT(29);
+
+    //AUANGCON1 |= BIT(30); // mirror enable
+
+    //AUANGCON2 |= BIT(29) | BIT(30); // adc mute
+
+    //AUANGCON1 |= BIT(3);  // pa mute
+}
+
+void saia_frequency_set(uint32_t frequency)
+{
+    if (frequency == SAI_AUDIO_FREQUENCY_48K) {
+        adpll_init(0);
+    } else if (frequency == SAI_AUDIO_FREQUENCY_44K) {
+        adpll_init(1);
+    }
+}
+
+void saia_channels_set(uint8_t channels)
+{
+    if (channels == 1) {
+        AU0LMIXCOEF = 0x00007FFFF;
+        AU0RMIXCOEF = 0x00007FFFF;
+        AU1LMIXCOEF = 0x00007FFFF;
+        AU1RMIXCOEF = 0x00007FFFF;
+        DACDIGCON0 |= BIT(7);
+        DACDIGCON0 |= BIT(8);
+    } else {
+        DACDIGCON0 &= ~BIT(7);
+        DACDIGCON0 &= ~BIT(8);
+    }
+}
+
+void saia_volume_set(rt_uint8_t volume)
+{
+    if (volume > 100)
+        volume = 100;
+    
+    uint32_t dvol = volume * 5242; // max is 0x7ffff
+    DACVOLCON = dvol | (0x02 << 16); // dac fade in
+}
 
 static rt_err_t sound_getcaps(struct rt_audio_device *audio, struct rt_audio_caps *caps)
 {
@@ -148,7 +261,7 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
         {
             rt_uint8_t volume = caps->udata.value;
 
-            // es8388_volume_set(volume);
+            saia_volume_set(volume);
             snd_dev->volume = volume;
             LOG_D("set volume %d", volume);
             break;
@@ -168,10 +281,10 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
         {
         case AUDIO_DSP_PARAM:
         {
-            // /* set samplerate */
-            // SAIA_Frequency_Set(caps->udata.config.samplerate);
-            // /* set channels */
-            // SAIA_Channels_Set(caps->udata.config.channels);
+            /* set samplerate */
+            saia_frequency_set(caps->udata.config.samplerate);
+            /* set channels */
+            saia_channels_set(caps->udata.config.channels);
 
             /* save configs */
             snd_dev->replay_config.samplerate = caps->udata.config.samplerate;
@@ -183,7 +296,7 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
 
         case AUDIO_DSP_SAMPLERATE:
         {
-            // SAIA_Frequency_Set(caps->udata.config.samplerate);
+            saia_frequency_set(caps->udata.config.samplerate);
             snd_dev->replay_config.samplerate = caps->udata.config.samplerate;
             LOG_D("set samplerate %d", snd_dev->replay_config.samplerate);
             break;
@@ -191,7 +304,7 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
 
         case AUDIO_DSP_CHANNELS:
         {
-            // SAIA_Channels_Set(caps->udata.config.channels);
+            saia_channels_set(caps->udata.config.channels);
             snd_dev->replay_config.channels   = caps->udata.config.channels;
             LOG_D("set channels %d", snd_dev->replay_config.channels);
             break;
@@ -226,9 +339,12 @@ static rt_err_t sound_init(struct rt_audio_device *audio)
     RT_ASSERT(audio != RT_NULL); 
     snd_dev = (struct sound_device *)audio->parent.user_data;
 
+    adpll_init(0);
+    dac_start();
+
     /* set default params */
-    // SAIA_Frequency_Set(snd_dev->replay_config.samplerate);
-    // SAIA_Channels_Set(snd_dev->replay_config.channels);
+    saia_frequency_set(snd_dev->replay_config.samplerate);
+    saia_channels_set(snd_dev->replay_config.channels);
 
     return RT_EOK; 
 }
@@ -243,6 +359,15 @@ static rt_err_t sound_start(struct rt_audio_device *audio, int stream)
     if (stream == AUDIO_STREAM_REPLAY)
     {
         LOG_D("open sound device");
+
+        AUBUFSIZE       = (TX_FIFO_SIZE-1);
+        AUBUFSIZE       |= (TX_FIFO_SIZE / 2) << 16;
+        AUBUFSTARTADDR  = DMA_ADR(snd_dev->tx_fifo);
+
+        DACDIGCON0  = BIT(0) | BIT(10); // (0x01<<2)
+        DACVOLCON   = 0x7fff; // -60DB
+        DACVOLCON  |= BIT(20);
+
         // es8388_start(ES_MODE_DAC);
         // HAL_SAI_Transmit_DMA(&SAI1A_Handler, snd_dev->tx_fifo, TX_FIFO_SIZE / 2);
     }
@@ -257,12 +382,12 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
     RT_ASSERT(audio != RT_NULL); 
     snd_dev = (struct sound_device *)audio->parent.user_data; 
 
-    // if (stream == AUDIO_STREAM_REPLAY)
-    // {
+    if (stream == AUDIO_STREAM_REPLAY)
+    {
         // HAL_SAI_DMAStop(&SAI1A_Handler);
         // es8388_stop(ES_MODE_DAC);
         LOG_D("close sound device");
-    // }
+    }
 
     return RT_EOK;
 }
@@ -271,9 +396,19 @@ rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, vo
 {
     rt_kprintf("sound_transmit\n");
     struct sound_device *snd_dev = RT_NULL;
+    rt_size_t tmp_size = size;
+    rt_size_t count = 0;
 
     RT_ASSERT(audio != RT_NULL); 
     snd_dev = (struct sound_device *)audio->parent.user_data;
+
+    while (tmp_size-- > 0) {
+        if (AUBUFCON & BIT(8)) {
+            AUBUFCON |= BIT(1) | BIT(4);
+            rt_sem_take(snd_dev->sem, RT_WAITING_FOREVER);
+        }
+        AUBUFDATA = ((const uint32_t *)writeBuf)[count++];
+    }
 
     return size; 
 }
@@ -309,10 +444,31 @@ static struct rt_audio_ops ops =
     .buffer_info = sound_buffer_info,
 };
 
+void audio_isr(int vector, void *param)
+{
+    struct sound_device *snd_dev = RT_NULL;
+
+    RT_ASSERT(param != RT_NULL); 
+    snd_dev = (struct sound_device *)param; 
+
+    //Audio buffer pend
+    if (AUBUFCON & BIT(5)) {
+        AUBUFCON |= BIT(1);         //Audio Buffer Pend Clear
+        AUBUFCON &= ~BIT(4);        //Audio buffer interrupt disable
+        rt_audio_tx_complete(&snd_dev->audio);
+        rt_sem_release(snd_dev->sem);
+    }
+}
+
 static int rt_hw_sound_init(void)
 {
     rt_uint8_t *tx_fifo = RT_NULL; 
-    static struct sound_device snd_dev = {0};
+
+    snd_dev.sem = rt_sem_create("snd_sem", 0, RT_IPC_FLAG_FIFO);
+    if (snd_dev.sem == RT_NULL)
+    {
+        return -RT_ENOMEM;
+    }
 
     /* 分配 DMA 搬运 buffer */ 
     tx_fifo = rt_calloc(1, TX_FIFO_SIZE); 
@@ -326,7 +482,7 @@ static int rt_hw_sound_init(void)
 
     /* init default configuration */
     {
-        snd_dev.replay_config.samplerate = 44100;
+        snd_dev.replay_config.samplerate = 48000;
         snd_dev.replay_config.channels   = 2;
         snd_dev.replay_config.samplebits = 16;
         snd_dev.volume                   = 55;
@@ -336,6 +492,8 @@ static int rt_hw_sound_init(void)
     snd_dev.audio.ops = &ops;
     rt_audio_register(&snd_dev.audio, "sound0", RT_DEVICE_FLAG_WRONLY, &snd_dev);
 
-    return RT_EOK; 
+    rt_hw_interrupt_install(IRQ_AUBUF0_1_VECTOR, audio_isr, &snd_dev.audio.parent.user_data, "au_isr");
+
+    return RT_EOK;
 }
 INIT_DEVICE_EXPORT(rt_hw_sound_init);
