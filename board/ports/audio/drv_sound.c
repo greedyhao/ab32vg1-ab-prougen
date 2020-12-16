@@ -136,14 +136,15 @@ void saia_frequency_set(uint32_t frequency)
 
 void saia_channels_set(uint8_t channels)
 {
+    rt_kprintf("saia_channels_set=%d\n", channels);
     if (channels == 1) {
-        AU0LMIXCOEF = 0x00007FFFF;
-        AU0RMIXCOEF = 0x00007FFFF;
-        AU1LMIXCOEF = 0x00007FFFF;
-        AU1RMIXCOEF = 0x00007FFFF;
+        AU0LMIXCOEF = 0x00007FFF;
+        AU1LMIXCOEF = 0x00007FFF;
         DACDIGCON0 |= BIT(7);
         DACDIGCON0 |= BIT(8);
+        AUANGCON1 &= ~BIT(0);
     } else {
+        AUANGCON1 |= BIT(0);
         DACDIGCON0 &= ~BIT(7);
         DACDIGCON0 &= ~BIT(8);
     }
@@ -154,7 +155,8 @@ void saia_volume_set(rt_uint8_t volume)
     if (volume > 100)
         volume = 100;
     
-    uint32_t dvol = volume * 5242; // max is 0x7ffff
+    uint32_t dvol = volume * 327; // max is 0x7ffff
+    rt_kprintf("dvol=0x%x\n", dvol);
     DACVOLCON = dvol | (0x02 << 16); // dac fade in
 }
 
