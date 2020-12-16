@@ -13,8 +13,8 @@
 #include <rthw.h>
 #include "ab32vgx.h"
 
-uint32_t irq_mask AT(.bss.irq_tbl);
-void *tbl_irq_vector[IRQ_TOTAL_NUM] AT(.bss.irq_tbl);
+uint32_t irq_mask;
+void *tbl_irq_vector[IRQ_TOTAL_NUM];
 void (*cpu_irq_comm_hook)(void);
 
 void set_cpu_irq_comm(void (*irq_hook)(void))

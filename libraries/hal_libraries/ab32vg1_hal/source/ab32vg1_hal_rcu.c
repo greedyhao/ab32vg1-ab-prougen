@@ -8,7 +8,6 @@
 
 #ifdef HAL_RCU_MODULE_ENABLED
 
-AT(.drv_text.rcu)
 void hal_rcu_periph_clk_enable(uint32_t periph)
 {
     if (periph <= RCU_TMR2) {
@@ -18,7 +17,6 @@ void hal_rcu_periph_clk_enable(uint32_t periph)
     }
 }
 
-AT(.drv_text.rcu)
 void hal_rcu_periph_clk_disable(uint32_t periph)
 {
     if (periph <= RCU_TMR2) {

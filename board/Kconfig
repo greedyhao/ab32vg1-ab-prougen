@@ -12,10 +12,21 @@ endmenu
 
 menu "On-chip Peripheral Drivers"
 
-menuconfig BSP_USING_UART0
-    bool "Enable UART0"
-    select RT_USING_SERIAL
-    default y
+    menuconfig BSP_USING_UART0
+        bool "Enable UART0"
+        select RT_USING_SERIAL
+        default y
+
+    menuconfig BSP_USING_AUDIO
+        bool "Enable Audio Device"
+        select RT_USING_AUDIO
+        default n
+
+        if BSP_USING_AUDIO
+            config BSP_USING_AUDIO_PLAY
+            bool "Enable Audio Play"
+            default y
+        endif
 
 menuconfig BSP_USING_SDIO
     bool "Enable SDIO"

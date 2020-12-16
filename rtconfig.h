@@ -15,10 +15,11 @@
 #define RT_USING_HOOK
 #define RT_USING_IDLE_HOOK
 #define RT_IDLE_HOOK_LIST_SIZE 4
-#define IDLE_THREAD_STACK_SIZE 1024
+#define IDLE_THREAD_STACK_SIZE 230
 #define RT_USING_TIMER_SOFT
 #define RT_TIMER_THREAD_PRIO 4
-#define RT_TIMER_THREAD_STACK_SIZE 512
+#define RT_TIMER_THREAD_STACK_SIZE 190
+#define RT_DEBUG
 
 /* Inter-Thread communication */
 
@@ -48,7 +49,7 @@
 
 #define RT_USING_COMPONENTS_INIT
 #define RT_USING_USER_MAIN
-#define RT_MAIN_THREAD_STACK_SIZE 1024
+#define RT_MAIN_THREAD_STACK_SIZE 320
 #define RT_MAIN_THREAD_PRIORITY 10
 
 /* C++ features */
@@ -62,9 +63,8 @@
 #define FINSH_HISTORY_LINES 5
 #define FINSH_USING_SYMTAB
 #define FINSH_USING_DESCRIPTION
-#define FINSH_ECHO_DISABLE_DEFAULT
 #define FINSH_THREAD_PRIORITY 20
-#define FINSH_THREAD_STACK_SIZE 1024
+#define FINSH_THREAD_STACK_SIZE 640
 #define FINSH_CMD_SIZE 80
 #define FINSH_USING_MSH
 #define FINSH_USING_MSH_DEFAULT
@@ -92,6 +92,10 @@
 #define RT_MMCSD_STACK_SIZE 1024
 #define RT_MMCSD_THREAD_PREORITY 22
 #define RT_MMCSD_MAX_PARTITION 16
+#define RT_USING_AUDIO
+#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 1024
+#define RT_AUDIO_REPLAY_MP_BLOCK_COUNT 2
+#define RT_AUDIO_RECORD_PIPE_SIZE 512
 
 /* Using USB */
 
@@ -160,6 +164,11 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_MULTIBUTTON
+#define PKG_USING_MULTIBUTTON_V102
+
+/* MultiButton Options */
+
 
 /* samples: kernel and components samples */
 
@@ -177,6 +186,8 @@
 
 #define BSP_USING_UART0
 #define BSP_USING_SDIO
+#define BSP_USING_AUDIO
+#define BSP_USING_AUDIO_PLAY
 
 /* Board extended module Drivers */
 
