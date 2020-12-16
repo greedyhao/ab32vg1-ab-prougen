@@ -160,6 +160,11 @@ void saia_volume_set(rt_uint8_t volume)
     DACVOLCON = dvol | (0x02 << 16); // dac fade in
 }
 
+uint8_t saia_volume_get(void)
+{
+    return ((DACVOLCON & 0xffff) / 327);
+}
+
 static rt_err_t sound_getcaps(struct rt_audio_device *audio, struct rt_audio_caps *caps)
 {
     rt_err_t result = RT_EOK;
@@ -225,7 +230,7 @@ static rt_err_t sound_getcaps(struct rt_audio_device *audio, struct rt_audio_cap
             break;
 
         case AUDIO_MIXER_VOLUME:
-            // caps->udata.value =  es8388_volume_get();
+            caps->udata.value =  saia_volume_get();
             break;
 
         default:
@@ -250,7 +255,7 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
     rt_err_t result = RT_EOK;
     struct sound_device *snd_dev = RT_NULL;
 
-    RT_ASSERT(audio != RT_NULL); 
+    RT_ASSERT(audio != RT_NULL);
     snd_dev = (struct sound_device *)audio->parent.user_data;
 
     switch (caps->main_type)

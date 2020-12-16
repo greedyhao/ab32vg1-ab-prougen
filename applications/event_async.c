@@ -16,9 +16,10 @@ uint8_t cnt = 0;
 void saia_frequency_set(uint32_t frequency);
 void saia_channels_set(uint8_t channels);
 void saia_volume_set(rt_uint8_t volume);
+uint8_t saia_volume_get(void);
 void button_callback(void *btn)
 {
-    uint32_t btn_event_val; 
+    uint32_t btn_event_val;
     
     btn_event_val = get_button_event((struct button *)btn);
     
@@ -46,6 +47,7 @@ void button_callback(void *btn)
             cnt = 0;
         }
     cnt++;
+        rt_kprintf("vol=%d\n", saia_volume_get());
         rt_kprintf("button single click\n");
     break; 
 
