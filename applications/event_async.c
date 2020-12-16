@@ -13,7 +13,7 @@ static uint8_t button_read_pin(void)
 }
 
 uint8_t cnt = 0;
-void saia_frequency_set(uint32_t frequency);
+// void saia_frequency_set(uint32_t frequency);
 void saia_channels_set(uint8_t channels);
 void saia_volume_set(rt_uint8_t volume);
 uint8_t saia_volume_get(void);
@@ -25,17 +25,17 @@ void button_callback(void *btn)
     
     switch(btn_event_val)
     {
-    case PRESS_DOWN:
-        rt_kprintf("button press down\n"); 
-    break; 
+    // case PRESS_DOWN:
+    //     rt_kprintf("button press down\n"); 
+    // break; 
 
-    case PRESS_UP: 
-        rt_kprintf("button press up\n");
-    break; 
+    // case PRESS_UP: 
+    //     rt_kprintf("button press up\n");
+    // break; 
 
-    case PRESS_REPEAT: 
-        rt_kprintf("button press repeat\n");
-    break; 
+    // case PRESS_REPEAT: 
+    //     rt_kprintf("button press repeat\n");
+    // break; 
 
     case SINGLE_CLICK: 
         if (cnt == 1) {
@@ -87,7 +87,7 @@ int multi_button_test(void)
     rt_thread_t thread = RT_NULL;
     
     /* Create background ticks thread */
-    thread = rt_thread_create("btn", btn_thread_entry, RT_NULL, 1024, 10, 10);
+    thread = rt_thread_create("btn", btn_thread_entry, RT_NULL, 210, 10, 10);
     if(thread == RT_NULL)
     {
         return RT_ERROR; 
@@ -97,9 +97,9 @@ int multi_button_test(void)
     /* low level drive */
     rt_pin_mode  (BUTTON_PIN, PIN_MODE_INPUT_PULLUP); 
     button_init  (&btn, button_read_pin, PIN_LOW);
-    button_attach(&btn, PRESS_DOWN,       button_callback);
-    button_attach(&btn, PRESS_UP,         button_callback);
-    button_attach(&btn, PRESS_REPEAT,     button_callback);
+    // button_attach(&btn, PRESS_DOWN,       button_callback);
+    // button_attach(&btn, PRESS_UP,         button_callback);
+    // button_attach(&btn, PRESS_REPEAT,     button_callback);
     button_attach(&btn, SINGLE_CLICK,     button_callback);
     button_attach(&btn, DOUBLE_CLICK,     button_callback);
     button_attach(&btn, LONG_RRESS_START, button_callback);
