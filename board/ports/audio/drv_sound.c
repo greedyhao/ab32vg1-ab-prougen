@@ -25,7 +25,7 @@ struct sound_device
     struct rt_audio_device audio;
     struct rt_audio_configure replay_config;
     rt_uint8_t *tx_fifo;
-    rt_sem_t sem;
+    rt_uint8_t *rx_fifo;
     rt_uint8_t volume;
 };
 
@@ -367,16 +367,15 @@ static rt_err_t sound_start(struct rt_audio_device *audio, int stream)
     {
         LOG_D("open sound device");
 
-        AUBUFSIZE       = (TX_FIFO_SIZE-1);
-        AUBUFSIZE       |= (TX_FIFO_SIZE / 2) << 16;
-        AUBUFSTARTADDR  = DMA_ADR(snd_dev->tx_fifo);
+        AUBUFSIZE       = (TX_FIFO_SIZE / 4 - 1);
+        AUBUFSIZE       |= (TX_FIFO_SIZE / 8) << 16;
+        AUBUFSTARTADDR  = DMA_ADR(snd_dev->rx_fifo);
 
         DACDIGCON0  = BIT(0) | BIT(10); // (0x01<<2)
         DACVOLCON   = 0x7fff; // -60DB
         DACVOLCON  |= BIT(20);
 
-        // es8388_start(ES_MODE_DAC);
-        // HAL_SAI_Transmit_DMA(&SAI1A_Handler, snd_dev->tx_fifo, TX_FIFO_SIZE / 2);
+        AUBUFCON |= BIT(1) | BIT(4);
     }
 
     return RT_EOK;
@@ -391,8 +390,7 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
 
     if (stream == AUDIO_STREAM_REPLAY)
     {
-        // HAL_SAI_DMAStop(&SAI1A_Handler);
-        // es8388_stop(ES_MODE_DAC);
+        AUBUFCON &= ~BIT(4);
         LOG_D("close sound device");
     }
 
@@ -401,19 +399,15 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
 
 rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, void *readBuf, rt_size_t size)
 {
-    rt_kprintf("sound_transmit\n");
     struct sound_device *snd_dev = RT_NULL;
-    rt_size_t tmp_size = size;
+    rt_size_t tmp_size = size / 4;
     rt_size_t count = 0;
 
     RT_ASSERT(audio != RT_NULL); 
     snd_dev = (struct sound_device *)audio->parent.user_data;
 
     while (tmp_size-- > 0) {
-        if (AUBUFCON & BIT(8)) {
-            AUBUFCON |= BIT(1) | BIT(4);
-            rt_sem_take(snd_dev->sem, RT_WAITING_FOREVER);
-        }
+        while(AUBUFCON & BIT(8)); // aubuf full
         AUBUFDATA = ((const uint32_t *)writeBuf)[count++];
     }
 
@@ -453,29 +447,20 @@ static struct rt_audio_ops ops =
 
 void audio_isr(int vector, void *param)
 {
-    struct sound_device *snd_dev = RT_NULL;
-
-    RT_ASSERT(param != RT_NULL); 
-    snd_dev = (struct sound_device *)param; 
+    rt_interrupt_enter();
 
     //Audio buffer pend
     if (AUBUFCON & BIT(5)) {
         AUBUFCON |= BIT(1);         //Audio Buffer Pend Clear
-        AUBUFCON &= ~BIT(4);        //Audio buffer interrupt disable
-        rt_audio_tx_complete(&snd_dev->audio);
-        rt_sem_release(snd_dev->sem);
+        rt_audio_tx_complete(&snd_dev.audio);
     }
+    rt_interrupt_leave();
 }
 
 static int rt_hw_sound_init(void)
 {
     rt_uint8_t *tx_fifo = RT_NULL; 
-
-    snd_dev.sem = rt_sem_create("snd_sem", 0, RT_IPC_FLAG_FIFO);
-    if (snd_dev.sem == RT_NULL)
-    {
-        return -RT_ENOMEM;
-    }
+    rt_uint8_t *rx_fifo = RT_NULL; 
 
     /* 分配 DMA 搬运 buffer */ 
     tx_fifo = rt_calloc(1, TX_FIFO_SIZE); 
@@ -486,6 +471,16 @@ static int rt_hw_sound_init(void)
 
     rt_memset(tx_fifo, 0, TX_FIFO_SIZE);
     snd_dev.tx_fifo = tx_fifo;
+
+    /* 分配 DMA 搬运 buffer */ 
+    rx_fifo = rt_calloc(1, TX_FIFO_SIZE); 
+    if(rx_fifo == RT_NULL)
+    {
+        return -RT_ENOMEM;
+    }
+
+    rt_memset(rx_fifo, 0, TX_FIFO_SIZE);
+    snd_dev.rx_fifo = rx_fifo;
 
     /* init default configuration */
     {
@@ -499,7 +494,7 @@ static int rt_hw_sound_init(void)
     snd_dev.audio.ops = &ops;
     rt_audio_register(&snd_dev.audio, "sound0", RT_DEVICE_FLAG_WRONLY, &snd_dev);
 
-    rt_hw_interrupt_install(IRQ_AUBUF0_1_VECTOR, audio_isr, &snd_dev.audio.parent.user_data, "au_isr");
+    rt_hw_interrupt_install(IRQ_AUBUF0_1_VECTOR, audio_isr, RT_NULL, "au_isr");
 
     return RT_EOK;
 }
