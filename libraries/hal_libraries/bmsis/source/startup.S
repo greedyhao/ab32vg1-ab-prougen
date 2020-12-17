@@ -56,6 +56,9 @@ _start:
     jal x0, low_prio_irq
     mret
 
+    .org    0x80
+    j       0x84020
+
     .global cpu_irq_comm
 cpu_irq_comm:
     la      a5, __irq_stack
