@@ -63,8 +63,7 @@ SECTIONS
 
     .comm : {
         KEEP(*(.vector))
-        *(.text*)
-        *(.rodata*)
+        EXCLUDE_FILE (*applications*romfs.o) *(.text* .rodata*)
         *(.srodata*)
         *(.rela*)
         *(.data*)
@@ -73,6 +72,7 @@ SECTIONS
     } > comm AT > flash
 
     .flash : {
+        *romfs.o (.text* .rodata*)
         . = ALIGN(512);
     } > flash
 
