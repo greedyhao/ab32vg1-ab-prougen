@@ -128,9 +128,16 @@ void dac_start(void)
 void saia_frequency_set(uint32_t frequency)
 {
     if (frequency == SAI_AUDIO_FREQUENCY_48K) {
-        adpll_init(0);
+        // adpll_init(0);
+        DACDIGCON0 |= BIT(1);
+        DACDIGCON0 &= ~(0xf << 2);
+        DACDIGCON0 |= BIT(6);
     } else if (frequency == SAI_AUDIO_FREQUENCY_44K) {
-        adpll_init(1);
+        // adpll_init(1);
+        DACDIGCON0 &= ~BIT(1);
+        DACDIGCON0 &= ~(0xf << 2);
+        DACDIGCON0 |= BIT(1);
+        DACDIGCON0 |= BIT(6);
     }
 }
 
