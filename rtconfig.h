@@ -73,10 +73,10 @@
 /* Device virtual file system */
 
 #define RT_USING_DFS
+#define DFS_USING_WORKDIR
 #define DFS_FILESYSTEMS_MAX 2
 #define DFS_FILESYSTEM_TYPES_MAX 2
 #define DFS_FD_MAX 16
-#define RT_USING_DFS_ROMFS
 
 /* Device Drivers */
 
