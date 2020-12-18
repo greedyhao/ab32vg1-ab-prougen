@@ -1,12 +1,12 @@
 /* Define the flash max size */
 __max_flash_size = 768k;
 
-__comm_ram_size = 104k;
+__comm_ram_size = 103k;
 __heap_ram_size = 14k;
 
 __base = 0x10000000;
 
-__comm_vma = 0x12800;
+__comm_vma = 0x12C00;
 __heap_vma = __comm_vma + __comm_ram_size;
 
 __ram1_vma = 0x50000;
@@ -17,8 +17,8 @@ MEMORY
     flash(rx)       : org = __base + 512,       len = __max_flash_size
     comm(rx)        : org = __comm_vma,         len = __comm_ram_size
 
-    data            : org = 0x11000,            len = 5k
-    stack           : org = 0x12400,            len = 1k
+    data            : org = 0x11000,            len = 6k
+    stack           : org = 0x12800,            len = 1k
     heap            : org = __heap_vma,         len = __heap_ram_size
     ram1(rx)        : org = __ram1_vma,         len = 0x7a00
 }
@@ -33,7 +33,7 @@ SECTIONS
         /*board\\ports\\*.o(.text*)*/
         *hal_drivers\\*.o(.text*)
         *hal_libraries\\ab32vg1_hal\\*.o(.text*)
-        *components\\drivers\\*.o(.text* .rodata*)
+        /*components\\drivers\\*.o(.text* .rodata*)*/
         *components\\libc\\*.o(.text*)
         *ab32vg1_hal_msp.o(.text*)
         *components.o(.text* .rodata*)

@@ -102,7 +102,6 @@
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
-#define RT_USING_POSIX
 
 /* Network */
 
@@ -184,9 +183,9 @@
 /* On-chip Peripheral Drivers */
 
 #define BSP_USING_UART0
-#define BSP_USING_SDIO
 #define BSP_USING_AUDIO
 #define BSP_USING_AUDIO_PLAY
+#define BSP_USING_SDIO
 
 /* Board extended module Drivers */
 

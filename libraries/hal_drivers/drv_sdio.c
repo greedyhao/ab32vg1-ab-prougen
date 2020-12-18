@@ -329,7 +329,7 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
 
     /* open irq */
     // hw_sdio->mask |= HW_SDIO_IT_CMDSENT | HW_SDIO_IT_CMDREND | HW_SDIO_ERRORS;
-    hw_sdio[SDCON] |= BIT(4);   /* enable DATA interrupt */
+    hw_sdio[SDCON] |= BIT(4);   /* enable Command interrupt */
     if (data != RT_NULL)
     {
         hw_sdio[SDCON] |= BIT(5); /* enable DATA interrupt */
@@ -465,19 +465,21 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
     } else {
         sd_baud = 3;
     }
-    hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
+    // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
 
     switch (io_cfg->power_mode)
     {
-    // case MMCSD_POWER_OFF:
-    //     // hw_sdio->power = HW_SDIO_POWER_OFF;
-    //     break;
-    // case MMCSD_POWER_UP:
-    //     // hw_sdio->power = HW_SDIO_POWER_UP;
-    //     break;
-    // case MMCSD_POWER_ON:
+    case MMCSD_POWER_OFF:
+        hw_sdio[SDCON] &= ~BIT(0);
+        break;
+    case MMCSD_POWER_UP:
+        hw_sdio[SDCON] |= BIT(0);
+        hw_sdio[SDCON] |= BIT(3);
+        break;
+    case MMCSD_POWER_ON:
+        hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
     //     // hw_sdio->power = HW_SDIO_POWER_ON;
-    //     break;
+        break;
     default:
         LOG_W("unknown power_mode %d", io_cfg->power_mode);
         break;
