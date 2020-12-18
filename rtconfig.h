@@ -77,6 +77,7 @@
 #define DFS_FILESYSTEMS_MAX 2
 #define DFS_FILESYSTEM_TYPES_MAX 2
 #define DFS_FD_MAX 16
+#define RT_USING_DFS_ROMFS
 
 /* Device Drivers */
 
@@ -141,6 +142,10 @@
 
 /* multimedia packages */
 
+#define PKG_USING_WAVPLAYER
+#define PKG_WP_USING_PLAY
+#define PKG_WP_PLAY_DEVICE "sound0"
+#define PKG_USING_WAVPLAYER_LATEST_VERSION
 
 /* tools packages */
 
@@ -156,6 +161,8 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_OPTPARSE
+#define PKG_USING_OPTPARSE_V100
 #define PKG_USING_MULTIBUTTON
 #define PKG_USING_MULTIBUTTON_V102
 
