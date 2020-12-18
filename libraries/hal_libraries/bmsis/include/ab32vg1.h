@@ -196,6 +196,7 @@ typedef enum
 #define PICPR           SFR_RW (SFR5_BASE + 0x12*4)
 #define PICADR          SFR_RW (SFR5_BASE + 0x13*4)
 #define PICPND          SFR_RW (SFR5_BASE + 0x14*4)
+#define EPICCON         SFR_RW (SFR5_BASE + 0x1e*4)
 #define EPC             SFR_RW (SFR5_BASE + 0x1f*4)
 
 #define SADCDAT0        SFR_RO (SFR5_BASE + 0x20*4)
