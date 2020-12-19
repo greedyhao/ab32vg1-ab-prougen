@@ -12,9 +12,6 @@
 #define DBG_TAG              "drv.snd_dev"
 #define DBG_LVL              DBG_INFO
 #include <rtdbg.h>
-// #define LOG_D(...) rt_kprintf(__VA_ARGS__)
-// #define LOG_I(...) rt_kprintf(__VA_ARGS__)
-// #define LOG_E(...) rt_kprintf(__VA_ARGS__)
 
 #define SAI_AUDIO_FREQUENCY_44K         ((uint32_t)44100u)
 #define SAI_AUDIO_FREQUENCY_48K         ((uint32_t)48000u)
@@ -30,23 +27,6 @@ struct sound_device
 };
 
 static struct sound_device snd_dev = {0};
-
-// static void virtualplay(void *p)
-// {
-//     struct sound_device *sound = (struct sound_device *)p;
-
-//     // while(1)
-//     // {
-//         /* tick = TX_DMA_FIFO_SIZE/2 * 1000ms / 44100 / 4 ≈ 5.8 */
-//         rt_thread_mdelay(6);
-//         rt_audio_tx_complete(&sound->audio);
-
-//     //     if(sound->endflag == 1)
-//     //     {
-//     //         break;
-//     //     }
-//     // }
-// }
 
 //apll = 采样率*ADPLL_DIV*512
 //audio pll init
@@ -128,12 +108,10 @@ void dac_start(void)
 void saia_frequency_set(uint32_t frequency)
 {
     if (frequency == SAI_AUDIO_FREQUENCY_48K) {
-        // adpll_init(0);
         DACDIGCON0 |= BIT(1);
         DACDIGCON0 &= ~(0xf << 2);
         DACDIGCON0 |= BIT(6);
     } else if (frequency == SAI_AUDIO_FREQUENCY_44K) {
-        // adpll_init(1);
         DACDIGCON0 &= ~BIT(1);
         DACDIGCON0 &= ~(0xf << 2);
         DACDIGCON0 |= BIT(1);
@@ -143,7 +121,7 @@ void saia_frequency_set(uint32_t frequency)
 
 void saia_channels_set(uint8_t channels)
 {
-    rt_kprintf("saia_channels_set=%d\n", channels);
+    LOG_D("saia_channels_set=%d", channels);
     if (channels == 1) {
         AU0LMIXCOEF = 0x00007FFF;
         AU1LMIXCOEF = 0x00007FFF;
@@ -163,7 +141,7 @@ void saia_volume_set(rt_uint8_t volume)
         volume = 100;
     
     uint32_t dvol = volume * 327; // max is 0x7ffff
-    rt_kprintf("dvol=0x%x\n", dvol);
+    LOG_D("dvol=0x%x", dvol);
     DACVOLCON = dvol | (0x02 << 16); // dac fade in
 }
 
@@ -258,7 +236,6 @@ static rt_err_t sound_getcaps(struct rt_audio_device *audio, struct rt_audio_cap
 
 static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_caps *caps)
 {
-    rt_kprintf("sound_configure\n");
     rt_err_t result = RT_EOK;
     struct sound_device *snd_dev = RT_NULL;
 
