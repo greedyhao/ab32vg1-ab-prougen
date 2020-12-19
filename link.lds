@@ -34,11 +34,10 @@ SECTIONS
     } > init
 
     .ram1 __ram1_vma : {
-        /*board\\ports\\*.o(.text*)*/
-        *hal_drivers\\*.o(.text*)
-        *hal_libraries\\ab32vg1_hal\\*.o(.text*)
-        *components\\drivers\\*.o(.text* .rodata*)
-        *components\\libc\\*.o(.text*)
+        *hal_drivers**.o(.text*)
+        *hal_libraries*ab32vg1_hal**.o(.text*)
+        *components*drivers**.o(.text* .rodata*)
+        *components*libc**.o(.text*)
         *ab32vg1_hal_msp.o(.text*)
         *components.o(.text* .rodata*)
         *ipc.o(.text* .rodata*)
