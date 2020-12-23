@@ -631,14 +631,14 @@ void mmcsd_detect(void *param)
 
                 mmcsd_send_if_cond(host, host->valid_ocr);
 
-                err = sdio_io_send_op_cond(host, 0, &ocr);
-                if (!err)
-                {
-                    if (init_sdio(host, ocr))
-                        mmcsd_power_off(host);
-                    mmcsd_host_unlock(host);
-                    continue;
-                }
+                // err = sdio_io_send_op_cond(host, 0, &ocr);
+                // if (!err)
+                // {
+                //     if (init_sdio(host, ocr))
+                //         mmcsd_power_off(host);
+                //     mmcsd_host_unlock(host);
+                //     continue;
+                // }
 
                 /*
                  * detect SD card

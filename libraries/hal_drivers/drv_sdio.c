@@ -12,9 +12,9 @@
 #include "interrupt.h"
 #include <rthw.h>
 
-#if 1
+#ifdef BSP_USING_SDIO
 
-#define DRV_DEBUG
+// #define DRV_DEBUG
 #define LOG_TAG             "drv.sdio"
 #include <drv_log.h>
 
@@ -52,7 +52,7 @@ struct rthw_sdio
 ALIGN(SDIO_ALIGN_LEN)
 static rt_uint8_t cache_buf[SDIO_BUFF_SIZE];
 
-static uint8_t sd_baud = 199;
+static uint8_t sd_baud = 119;
 
 uint8_t sysclk_update_baud(uint8_t baud);
 
@@ -136,9 +136,19 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
     struct rt_mmcsd_cmd *cmd = sdio->pkg->cmd;
     struct rt_mmcsd_data *data = cmd->data;
     hal_sfr_t hw_sdio = sdio->sdio_des.hw_sdio;
+    uint16_t i = 500; /* timeout 5000ms */
+    rt_err_t tx_finish = -RT_ERROR;
 
-    if (rt_event_recv(&sdio->event, 0xffffffff, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-                      rt_tick_from_millisecond(5000), &status) != RT_EOK)
+    while (i-- > 0) {
+        if (hw_sdio[SDCON] & BIT(12)) {
+            hw_sdio[SDCPND] = BIT(12);
+            tx_finish = RT_EOK;
+            break;
+        }
+        rt_thread_mdelay(10);
+    }
+
+    if (tx_finish != RT_EOK)
     {
         LOG_E("wait completed timeout");
         cmd->err = -RT_ETIMEOUT;
@@ -150,17 +160,21 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
         return;
     }
 
-    cmd->resp[0] = hw_sdio[SDARG3];
-    cmd->resp[1] = hw_sdio[SDARG2];
-    cmd->resp[2] = hw_sdio[SDARG1];
-    cmd->resp[3] = hw_sdio[SDARG0];
+    if (!(hw_sdio[SDCON] & BIT(15))) {
+        cmd->resp[0] = hw_sdio[SDARG3];
+        cmd->resp[1] = hw_sdio[SDARG2];
+        cmd->resp[2] = hw_sdio[SDARG1];
+        cmd->resp[3] = hw_sdio[SDARG0];
 
-    if (status & HW_SDIO_CON_CFLAG) {
+        LOG_D("cmd->resp[0]=0x%X, cmd->resp[1]=0x%X, cmd->resp[2]=0x%X, cmd->resp[3]=0x%X", cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
+    }
+
+    // if (status & HW_SDIO_CON_CFLAG) {
         
-    }
-    if (status & HW_SDIO_CON_DFLAG) {
+    // }
+    // if (status & HW_SDIO_CON_DFLAG) {
 
-    }
+    // }
 
     // if (status & HW_SDIO_ERRORS)
     // {
@@ -297,14 +311,41 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
           data ? data->blksize : 0
          );
 
+    #define CK8E            BIT(11)             //在命令/数据包后加上8CLK
+    #define CBUSY           BIT(10)             //Busy Check
+    #define CLRSP           BIT(9)              //17Byte Long Rsp
+    #define CRSP            BIT(8)              //Need Rsp
+
     /* config cmd reg */
-    reg_cmd = cmd->cmd_code | 0x40;
-    if (resp_type(cmd) == RESP_NONE)
-        reg_cmd |= 0x40 | BIT(11);
-    else if (resp_type(cmd) == RESP_R2)
-        reg_cmd |= HW_SDIO_RESPONSE_LONG;
-    else
-        reg_cmd |= HW_SDIO_RESPONSE_SHORT;
+    if (cmd->cmd_code != 18) {
+        reg_cmd = cmd->cmd_code | 0x40 | CK8E;
+    } else {
+        reg_cmd = cmd->cmd_code | 0x40;
+    }
+
+    switch (resp_type(cmd))
+    {
+    case RESP_R1:
+        reg_cmd |= CRSP;
+        break;
+    case RESP_R1B:
+        reg_cmd |= CBUSY | CRSP;
+        break;
+    case RESP_R2:
+        reg_cmd |= CLRSP | CRSP;
+        break;
+    case RESP_R3:
+        reg_cmd |= CRSP;
+        break;
+    case RESP_R6:
+        reg_cmd |= CRSP;
+        break;
+    case RESP_R7:
+        reg_cmd |= CRSP;
+        break;
+    default:
+        break;
+    }
 
     /* config data reg */
     if (data != RT_NULL)
@@ -324,23 +365,24 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* transfer config */
     if (data != RT_NULL)
     {
-       rthw_sdio_transfer_by_dma(sdio, pkg);
+        LOG_E("data tx no support");
+    //    rthw_sdio_transfer_by_dma(sdio, pkg);
     }
 
-    /* open irq */
-    // hw_sdio->mask |= HW_SDIO_IT_CMDSENT | HW_SDIO_IT_CMDREND | HW_SDIO_ERRORS;
-    hw_sdio[SDCON] |= BIT(4);   /* enable Command interrupt */
-    if (data != RT_NULL)
-    {
-        hw_sdio[SDCON] |= BIT(5); /* enable DATA interrupt */
-        // hw_sdio->mask |= HW_SDIO_IT_DATAEND;
-    }
+    // /* open irq */
+    // // hw_sdio->mask |= HW_SDIO_IT_CMDSENT | HW_SDIO_IT_CMDREND | HW_SDIO_ERRORS;
+    // hw_sdio[SDCON] |= BIT(4);   /* enable Command interrupt */
+    // if (data != RT_NULL)
+    // {
+    //     hw_sdio[SDCON] |= BIT(5); /* enable DATA interrupt */
+    //     // hw_sdio->mask |= HW_SDIO_IT_DATAEND;
+    // }
 
     /* send cmd */
-    // hw_sdio->arg = cmd->arg;
-    // hw_sdio->cmd = reg_cmd;
     hw_sdio[SDARG3] = cmd->arg;
     hw_sdio[SDCMD]  = reg_cmd;
+
+    LOG_D("cmd->arg=0x%X reg_cmd=0x%X", cmd->arg, reg_cmd);
 
     /* wait completed */
     rthw_sdio_wait_completed(sdio);
@@ -444,7 +486,7 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
 
     if (clk > clk_src)
     {
-        LOG_W("Setting rate is greater than clock source rate.");
+        LOG_W("Setting rate(%d) is greater than clock source rate(%d).", clk, clk_src);
         clk = clk_src;
     }
 
@@ -461,7 +503,7 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
     RTHW_SDIO_LOCK(sdio);
 
     if (clk_src < 1000000) {
-        sd_baud = 199;
+        sd_baud = 119;
     } else {
         sd_baud = 3;
     }
@@ -472,13 +514,22 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
     case MMCSD_POWER_OFF:
         hw_sdio[SDCON] &= ~BIT(0);
         break;
-    case MMCSD_POWER_UP:
-        hw_sdio[SDCON] |= BIT(0);
-        hw_sdio[SDCON] |= BIT(3);
-        break;
+    // case MMCSD_POWER_UP:
+    //     hw_sdio[SDCON] |= BIT(0);
+    //     hw_sdio[SDCON] |= BIT(3);
+    //     break;
     case MMCSD_POWER_ON:
+
+        hw_sdio[SDCON] = 0;
+
+        hal_udelay(20);
+        hw_sdio[SDCON] |= BIT(0);                 /* SD control enable */
         hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
-    //     // hw_sdio->power = HW_SDIO_POWER_ON;
+        hw_sdio[SDCON] |= BIT(3);                 /* Keep clock output */
+        hw_sdio[SDCON] |= BIT(5);                 /* Data interrupt enable */
+
+        hal_mdelay(40);
+        // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
         break;
     default:
         LOG_W("unknown power_mode %d", io_cfg->power_mode);
@@ -558,7 +609,7 @@ static const struct rt_mmcsd_host_ops ab32_sdio_ops =
     rthw_sdio_request,
     rthw_sdio_iocfg,
     rthw_sd_detect,
-    rthw_sdio_irq_update,
+    RT_NULL,
 };
 
 /**
@@ -606,7 +657,7 @@ struct rt_mmcsd_host *sdio_host_create(struct ab32_sdio_des *sdio_des)
 
     /* set host defautl attributes */
     host->ops = &ab32_sdio_ops;
-    host->freq_min = 400 * 1000;
+    host->freq_min = 240 * 1000;
     host->freq_max = SDIO_MAX_FREQ;
     host->valid_ocr = 0X00FFFF80;/* The voltage range supported is 1.65v-3.6v */
 #ifndef SDIO_USING_1_BIT

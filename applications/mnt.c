@@ -2,12 +2,16 @@
 
 #if 1
 
-#ifdef BSP_USING_SDCARD
+#ifdef BSP_USING_SDIO
 
 #include <dfs_elm.h>
 #include <dfs_fs.h>
 #include <dfs_posix.h>
 #include "drv_gpio.h"
+
+// #define DRV_DEBUG
+#define DBG_TAG "app.card"
+#include <rtdbg.h>
 
 void sd_mount(void *parameter)
 {
@@ -45,7 +49,7 @@ int stm32_sdcard_mount(void)
     }
     return RT_EOK;
 }
-INIT_APP_EXPORT(stm32_sdcard_mount);
+// INIT_APP_EXPORT(stm32_sdcard_mount);
 #endif
 
 #else
