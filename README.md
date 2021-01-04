@@ -20,7 +20,7 @@ ab32vg1-prougen 是 中科蓝讯(Bluetrum) 推出的一款基于 RISC-V 内核�
 
 该开发板常用 **板载资源** 如下：
 
-- MCU：AB5301A，主频 120MHz，可超频至 192MHz，4Mbit FLASH ，192KB RAM。
+- MCU：AB5301A，主频 120MHz，可超频至 192MHz，8Mbit FLASH ，192KB RAM。
 - 常用外设
   - LED: RGB灯
   - 按键: 3 个, USER(s2,s3) and RESET(s1)
@@ -35,7 +35,7 @@ ab32vg1-prougen 是 中科蓝讯(Bluetrum) 推出的一款基于 RISC-V 内核�
 | USB 转串口   |     支持     |             |
 | SD卡         |   即将支持   |             |
 | IRDA         |   即将支持   |             |
-| 音频接口     |   即将支持   |             |
+| 音频接口     |     支持     |             |
 | **片上外设** | **支持情况** | **备注**    |
 | GPIO         |     支持     | PA PB PE PF |
 | UART         |     支持     | UART0/1/2   |
@@ -73,11 +73,11 @@ ab32vg1-prougen 是 中科蓝讯(Bluetrum) 推出的一款基于 RISC-V 内核�
 
 #### 编译下载
 
-运行 `scons` 编译得到 `.dcf` 固件，通过 `downloader` 进行下载
+运行 `studio` 编译得到 `.dcf` 固件，通过 `downloader` 进行下载
 
 #### 运行结果
 
-下载程序成功之后，系统会自动运行，观察开发板上 LED 的运行效果，红色 LED 常亮、绿色 LED 会周期性闪烁。
+下载程序成功之后，系统会自动运行，观察开发板上 LED 的运行效果，红色 LED 会周期性闪烁。
 
 连接开发板对应串口到 PC , 在终端工具里打开相应的串口（115200-8-1-N），复位设备后，可以看到 RT-Thread 的输出信息:
 
@@ -102,7 +102,9 @@ msh >
 
 ## 注意事项
 
-波特率默认为 1.5M，需要使用 [Downloader](https://github.com/BLUETRUM/Downloader) 下载 `.dcf` 到芯片
+波特率默认为 1.5M，需要使用 [Downloader](https://github.com/BLUETRUM/Downloader) 下载 `.dcf` 到芯片，需要编译后自动下载，需要在 `Downloader` 中的下载的下拉窗中选择 `自动`；目前暂时屏蔽 uart1 打印
+
+使用 `romfs` 时，需要自己生成 `romfs.c` 进行替换，操作参考[使用 RomFS](https://www.rt-thread.org/document/site/tutorial/qemu-network/filesystems/filesystems/#romfs)
 
 编译报错的时候，如果出现重复定义的报错，可能需要在 `cconfig.h` 中手动添加以下配置
 
