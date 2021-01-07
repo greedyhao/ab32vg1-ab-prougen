@@ -134,19 +134,10 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
     struct rt_mmcsd_cmd *cmd = sdio->pkg->cmd;
     struct rt_mmcsd_data *data = cmd->data;
     hal_sfr_t hw_sdio = sdio->sdio_des.hw_sdio;
-    uint16_t i = 500; /* timeout 5000ms */
     rt_err_t tx_finish = -RT_ERROR;
 
-    while (i-- > 0) {
-        if (hw_sdio[SDCON] & HW_SDIO_CON_CFLAG) {
-            hw_sdio[SDCPND] = HW_SDIO_CON_CFLAG;
-            tx_finish = RT_EOK;
-            break;
-        }
-        rt_thread_mdelay(10);
-    }
-
-    if (tx_finish != RT_EOK)
+    if (rt_event_recv(&sdio->event, HW_SDIO_CON_CFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+                        rt_tick_from_millisecond(5000), &status) != RT_EOK)
     {
         LOG_E("wait completed timeout");
         cmd->err = -RT_ETIMEOUT;
@@ -166,13 +157,6 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
 
         LOG_D("cmd->resp[0]=0x%X, cmd->resp[1]=0x%X, cmd->resp[2]=0x%X, cmd->resp[3]=0x%X", cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
     }
-
-    // if (status & HW_SDIO_CON_CFLAG) {
-        
-    // }
-    // if (status & HW_SDIO_CON_DFLAG) {
-
-    // }
 
     // if (status & HW_SDIO_ERRORS)
     // {
@@ -538,6 +522,7 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
         hw_sdio[SDCON] |= BIT(0);                 /* SD control enable */
         hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
         hw_sdio[SDCON] |= BIT(3);                 /* Keep clock output */
+        hw_sdio[SDCON] |= BIT(4);
         hw_sdio[SDCON] |= BIT(5);                 /* Data interrupt enable */
 
         hal_mdelay(40);
@@ -597,12 +582,12 @@ void rthw_sdio_irq_process(struct rt_mmcsd_host *host)
     hal_sfr_t hw_sdio = sdio->sdio_des.hw_sdio;
     rt_uint32_t intstatus = hw_sdio[SDCON];
 
-    // /* clear flag */
-    // if (intstatus & HW_SDIO_CON_CFLAG) {
-    //     complete = 1;
-    //     hw_sdio[SDCPND] = HW_SDIO_CON_CFLAG;
-    //     sdio_irq_wakeup(host);
-    // }
+    /* clear flag */
+    if (intstatus & HW_SDIO_CON_CFLAG) {
+        complete = 1;
+        hw_sdio[SDCPND] = HW_SDIO_CON_CFLAG;
+        // sdio_irq_wakeup(host);
+    }
 
     if (intstatus & HW_SDIO_CON_DFLAG) {
         complete = 1;
