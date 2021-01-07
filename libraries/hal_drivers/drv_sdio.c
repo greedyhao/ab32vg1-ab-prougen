@@ -28,9 +28,6 @@ static struct ab32_sdio_config sdio_config[] =
 // static struct ab32_sdio sdio_obj = {0};
 static struct rt_mmcsd_host *host = RT_NULL;
 
-// #define SDIO_TX_RX_COMPLETE_TIMEOUT_LOOPS    (100000u)
-#define SDIO_TX_RX_COMPLETE_TIMEOUT_LOOPS    (5000u)
-
 #define RTHW_SDIO_LOCK(_sdio)   rt_mutex_take(&(_sdio)->mutex, RT_WAITING_FOREVER)
 #define RTHW_SDIO_UNLOCK(_sdio) rt_mutex_release(&(_sdio)->mutex);
 
@@ -359,9 +356,6 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
         rt_uint32_t size = data->blks * data->blksize;
         int order;
 
-        // hw_sdio->dctrl = 0;
-        // hw_sdio->dtimer = HW_SDIO_DATATIMEOUT;
-        // hw_sdio->dlen = size;
         order = get_order(data->blksize);
         dir = (data->flags & DATA_DIR_READ) ? HW_SDIO_TO_HOST : 0;
         // hw_sdio->dctrl = HW_SDIO_IO_ENABLE | (order << 4) | dir;
@@ -370,7 +364,6 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* transfer config */
     if (data != RT_NULL)
     {
-        // LOG_E("data tx no support");
         rthw_sdio_transfer_by_dma(sdio, pkg);
     }
 
@@ -395,30 +388,17 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* Waiting for data to be sent to completion */
     if (data != RT_NULL)
     {
-        rt_err_t ret = RT_EOK;
-        rt_uint32_t result = 0;
         rt_uint32_t size = data->blks * data->blksize;
         uint8_t *buf = pkg->buff;
-        volatile rt_uint32_t count = SDIO_TX_RX_COMPLETE_TIMEOUT_LOOPS;
 
-        ret = rt_event_recv(&sdio->event, 0xffffffff, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR
-        // ret = rt_event_recv(&sdio->event, 0xffffffff, RT_EVENT_FLAG_OR
-                                                         , rt_tick_from_millisecond(1000), &result);
-        if (ret != RT_EOK)
+        if (rt_event_recv(&sdio->event, HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+                        rt_tick_from_millisecond(5000), RT_NULL) != RT_EOK)
         {
             LOG_E("wait completed timeout");
-            rt_kprintf("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
-            rt_kprintf("result=0x%x ret=%d\n", result, ret);
-            // cmd->err = -RT_ETIMEOUT;
-            // return;
-        }
-        while (count && !(hw_sdio[SDCON] & HW_SDIO_CON_DFLAG)) /* wait for data send finish */
-        {
-            count--;
-            rt_thread_mdelay(1);
+            LOG_E("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
+            cmd->err = -RT_ETIMEOUT;
         }
         LOG_D("SDCON=0x%X SDCMD=0x%X", hw_sdio[SDCON], hw_sdio[SDCMD]);
-        hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
 // #if DRV_DEBUG
 //         for (int i = 0; i < size; i++) {
 //             rt_kprintf("0x%x ", buf[i]);
@@ -626,13 +606,13 @@ void rthw_sdio_irq_process(struct rt_mmcsd_host *host)
 
     if (intstatus & HW_SDIO_CON_DFLAG) {
         complete = 1;
-        // hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
-        sdio_irq_wakeup(host);
+        hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+        // sdio_irq_wakeup(host);
     }
 
     if (complete)
     {
-        rt_event_send(&sdio->event, HW_SDIO_CON_DFLAG);
+        rt_event_send(&sdio->event, intstatus);
     }
 }
 
