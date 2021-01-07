@@ -59,34 +59,8 @@
                                                                      111:flash error                                */
 #define HW_SDIO_CON_BUSY                        (0x01u << 20)   /*!< 0:device busy 1:device not busy                */
 
-// #define HW_SDIO_IT_CCRCFAIL                    (0x01U << 0)
-// #define HW_SDIO_IT_DCRCFAIL                    (0x01U << 1)
-// #define HW_SDIO_IT_CTIMEOUT                    (0x01U << 2)
-// #define HW_SDIO_IT_DTIMEOUT                    (0x01U << 3)
-// #define HW_SDIO_IT_TXUNDERR                    (0x01U << 4)
-// #define HW_SDIO_IT_RXOVERR                     (0x01U << 5)
-// #define HW_SDIO_IT_CMDREND                     (0x01U << 6)
-// #define HW_SDIO_IT_CMDSENT                     (0x01U << 7)
-// #define HW_SDIO_IT_DATAEND                     (0x01U << 8)
-// #define HW_SDIO_IT_STBITERR                    (0x01U << 9)
-// #define HW_SDIO_IT_DBCKEND                     (0x01U << 10)
-// #define HW_SDIO_IT_CMDACT                      (0x01U << 11)
-// #define HW_SDIO_IT_TXACT                       (0x01U << 12)
-// #define HW_SDIO_IT_RXACT                       (0x01U << 13)
-// #define HW_SDIO_IT_TXFIFOHE                    (0x01U << 14)
-// #define HW_SDIO_IT_RXFIFOHF                    (0x01U << 15)
-// #define HW_SDIO_IT_TXFIFOF                     (0x01U << 16)
-// #define HW_SDIO_IT_RXFIFOF                     (0x01U << 17)
-// #define HW_SDIO_IT_TXFIFOE                     (0x01U << 18)
-// #define HW_SDIO_IT_RXFIFOE                     (0x01U << 19)
-// #define HW_SDIO_IT_TXDAVL                      (0x01U << 20)
-// #define HW_SDIO_IT_RXDAVL                      (0x01U << 21)
-// #define HW_SDIO_IT_SDIOIT                      (0x01U << 22)
-
-// #define HW_SDIO_ERRORS \
-//     (HW_SDIO_IT_CCRCFAIL | HW_SDIO_IT_CTIMEOUT | \
-//      HW_SDIO_IT_DCRCFAIL | HW_SDIO_IT_DTIMEOUT | \
-//      HW_SDIO_IT_RXOVERR  | HW_SDIO_IT_TXUNDERR)
+#define HW_SDIO_ERRORS \
+    (HW_SDIO_CON_DCRCE)
 
 #define HW_SDIO_POWER_OFF                      (0x00U)
 #define HW_SDIO_POWER_UP                       (0x02U)

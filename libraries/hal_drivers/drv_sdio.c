@@ -158,32 +158,8 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
         LOG_D("cmd->resp[0]=0x%X, cmd->resp[1]=0x%X, cmd->resp[2]=0x%X, cmd->resp[3]=0x%X", cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
     }
 
-    // if (status & HW_SDIO_ERRORS)
-    // {
-    //     if ((status & HW_SDIO_IT_CCRCFAIL) && (resp_type(cmd) & (RESP_R3 | RESP_R4)))
-    //     {
-    //         cmd->err = RT_EOK;
-    //     }
-    //     else
-    //     {
-    //         cmd->err = -RT_ERROR;
-    //     }
-
-    //     if (status & HW_SDIO_IT_CTIMEOUT)
-    //     {
-    //         cmd->err = -RT_ETIMEOUT;
-    //     }
-
-    //     if (status & HW_SDIO_IT_DCRCFAIL)
-    //     {
-    //         data->err = -RT_ERROR;
-    //     }
-
-    //     if (status & HW_SDIO_IT_DTIMEOUT)
-    //     {
-    //         data->err = -RT_ETIMEOUT;
-    //     }
-
+    if (status & HW_SDIO_ERRORS)
+    {
     //     if (cmd->err == RT_EOK)
     //     {
     //         LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
@@ -206,12 +182,12 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
     //               data ? data->blksize : 0
     //              );
     //     }
-    // }
-    // else
-    // {
-    //     cmd->err = RT_EOK;
-    //     LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
-    // }
+    }
+    else
+    {
+        cmd->err = RT_EOK;
+        LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
+    }
 }
 
 /**
