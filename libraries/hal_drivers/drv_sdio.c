@@ -267,16 +267,16 @@ static void rthw_sdio_transfer_by_dma(struct rthw_sdio *sdio, struct sdio_pkg *p
     }
     hw_sdio = sdio->sdio_des.hw_sdio;
     size = data->blks * data->blksize;
-    LOG_I("dma size=%d", size);
+    LOG_D("dma size=%d", size);
 
     if (data->flags & DATA_DIR_WRITE)
     {
-        rt_kprintf("DATA_DIR_WRITE\n");
+        LOG_D("DATA_DIR_WRITE");
         sdio->sdio_des.txconfig((rt_uint32_t *)buff, size);
     }
     else if (data->flags & DATA_DIR_READ)
     {
-        rt_kprintf("DATA_DIR_READ\n");
+        LOG_D("DATA_DIR_READ");
         sdio->sdio_des.rxconfig((rt_uint32_t *)buff, size);
     }
     
@@ -404,14 +404,14 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
             count--;
             rt_thread_mdelay(1);
         }
-        rt_kprintf("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
+        LOG_D("SDCON=0x%X SDCMD=0x%X", hw_sdio[SDCON], hw_sdio[SDCMD]);
         hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
-
-        rt_kprintf("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
-        for (int i = 0; i < size; i++) {
-            rt_kprintf("0x%x ", buf[i]);
-        }
-        rt_kprintf("\n");
+// #if DRV_DEBUG
+//         for (int i = 0; i < size; i++) {
+//             rt_kprintf("0x%x ", buf[i]);
+//         }
+//         rt_kprintf("\n");
+// #endif
     }
 
     /* close irq, keep sdio irq */
@@ -531,10 +531,13 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
         hw_sdio[SDCON] &= ~BIT(0);
         break;
     case MMCSD_POWER_UP:
+    // rt_kprintf("MMCSD_POWER_UP\n");
+        hw_sdio[SDCON] = 0;
     //     hw_sdio[SDCON] |= BIT(0);
     //     hw_sdio[SDCON] |= BIT(3);
         break;
     case MMCSD_POWER_ON:
+    // rt_kprintf("MMCSD_POWER_ON\n");
 
         // hw_sdio[SDCON] = 0;
 

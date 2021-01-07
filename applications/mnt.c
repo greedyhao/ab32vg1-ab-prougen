@@ -49,7 +49,7 @@ int stm32_sdcard_mount(void)
     }
     return RT_EOK;
 }
-// INIT_APP_EXPORT(stm32_sdcard_mount);
+INIT_APP_EXPORT(stm32_sdcard_mount);
 #endif
 
 #else
