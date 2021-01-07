@@ -395,10 +395,23 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* Waiting for data to be sent to completion */
     if (data != RT_NULL)
     {
+        rt_err_t ret = RT_EOK;
+        rt_uint32_t result = 0;
         rt_uint32_t size = data->blks * data->blksize;
         uint8_t *buf = pkg->buff;
         volatile rt_uint32_t count = SDIO_TX_RX_COMPLETE_TIMEOUT_LOOPS;
 
+        ret = rt_event_recv(&sdio->event, 0xffffffff, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR
+        // ret = rt_event_recv(&sdio->event, 0xffffffff, RT_EVENT_FLAG_OR
+                                                         , rt_tick_from_millisecond(1000), &result);
+        if (ret != RT_EOK)
+        {
+            LOG_E("wait completed timeout");
+            rt_kprintf("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
+            rt_kprintf("result=0x%x ret=%d\n", result, ret);
+            // cmd->err = -RT_ETIMEOUT;
+            // return;
+        }
         while (count && !(hw_sdio[SDCON] & HW_SDIO_CON_DFLAG)) /* wait for data send finish */
         {
             count--;
@@ -545,7 +558,7 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
         hw_sdio[SDCON] |= BIT(0);                 /* SD control enable */
         hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
         hw_sdio[SDCON] |= BIT(3);                 /* Keep clock output */
-        // hw_sdio[SDCON] |= BIT(5);                 /* Data interrupt enable */
+        hw_sdio[SDCON] |= BIT(5);                 /* Data interrupt enable */
 
         hal_mdelay(40);
         // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
@@ -611,16 +624,16 @@ void rthw_sdio_irq_process(struct rt_mmcsd_host *host)
     //     sdio_irq_wakeup(host);
     // }
 
-    // if (intstatus & HW_SDIO_CON_DFLAG) {
-    //     complete = 1;
-    //     hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
-    //     sdio_irq_wakeup(host);
-    // }
+    if (intstatus & HW_SDIO_CON_DFLAG) {
+        complete = 1;
+        // hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+        sdio_irq_wakeup(host);
+    }
 
-    // if (complete)
-    // {
-    //     rt_event_send(&sdio->event, intstatus);
-    // }
+    if (complete)
+    {
+        rt_event_send(&sdio->event, HW_SDIO_CON_DFLAG);
+    }
 }
 
 static const struct rt_mmcsd_host_ops ab32_sdio_ops =
@@ -628,7 +641,7 @@ static const struct rt_mmcsd_host_ops ab32_sdio_ops =
     rthw_sdio_request,
     rthw_sdio_iocfg,
     rthw_sd_detect,
-    RT_NULL,
+    rthw_sdio_irq_update,
 };
 
 /**
