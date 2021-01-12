@@ -130,13 +130,13 @@ static int get_order(rt_uint32_t data)
   */
 static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
 {
-    rt_uint32_t status;
+    rt_uint32_t status = 0;
     struct rt_mmcsd_cmd *cmd = sdio->pkg->cmd;
     struct rt_mmcsd_data *data = cmd->data;
     hal_sfr_t hw_sdio = sdio->sdio_des.hw_sdio;
     rt_err_t tx_finish = -RT_ERROR;
 
-    if (rt_event_recv(&sdio->event, HW_SDIO_CON_CFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+    if (rt_event_recv(&sdio->event, 0xFFFFFFFF, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
                         rt_tick_from_millisecond(5000), &status) != RT_EOK)
     {
         LOG_E("wait completed timeout");
@@ -149,21 +149,26 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
         return;
     }
 
-    if (!(hw_sdio[SDCON] & HW_SDIO_CON_NRPS)) {
-        cmd->resp[0] = hw_sdio[SDARG3];
-        cmd->resp[1] = hw_sdio[SDARG2];
-        cmd->resp[2] = hw_sdio[SDARG1];
-        cmd->resp[3] = hw_sdio[SDARG0];
+    cmd->resp[0] = hw_sdio[SDARG3];
+    cmd->resp[1] = hw_sdio[SDARG2];
+    cmd->resp[2] = hw_sdio[SDARG1];
+    cmd->resp[3] = hw_sdio[SDARG0];
 
-        LOG_D("cmd->resp[0]=0x%X, cmd->resp[1]=0x%X, cmd->resp[2]=0x%X, cmd->resp[3]=0x%X", cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
-    }
-
-    if (status & HW_SDIO_ERRORS)
-    {
-    //     if (cmd->err == RT_EOK)
-    //     {
-    //         LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
-    //     }
+    if (status & HW_SDIO_ERRORS) {
+        if (status & HW_SDIO_CON_DCRCE) {
+            LOG_E("Read CRC error!");
+            cmd->err = -RT_ERROR;
+            hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+        }
+        // if (((status & HW_SDIO_CON_CRCS) >> 17) != 2) {
+        //     LOG_E("Write CRC error!");
+        //     cmd->err = -RT_ERROR;
+        //     hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+        // }
+        // if (cmd->err == RT_EOK)
+        // {
+            LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
+        // }
     //     else
     //     {
     //         LOG_D("err:0x%08x, %s%s%s%s%s%s%s cmd:%d arg:0x%08x rw:%c len:%d blksize:%d",
@@ -183,10 +188,13 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
     //              );
     //     }
     }
-    else
-    {
-        cmd->err = RT_EOK;
-        LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
+    else {
+        if (!(hw_sdio[SDCON] & HW_SDIO_CON_NRPS)) {
+            cmd->err = RT_EOK;
+            LOG_D("sta:0x%08X [%08X %08X %08X %08X]", status, cmd->resp[0], cmd->resp[1], cmd->resp[2], cmd->resp[3]);
+        } else {
+            cmd->err = -RT_ERROR;
+        }
     }
 }
 
@@ -287,8 +295,7 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
 
     switch (resp_type(cmd))
     {
-    case RESP_R1:
-        reg_cmd |= CRSP;
+    case RESP_NONE:
         break;
     case RESP_R1B:
         reg_cmd |= CBUSY | CRSP;
@@ -296,16 +303,8 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     case RESP_R2:
         reg_cmd |= CLRSP | CRSP;
         break;
-    case RESP_R3:
-        reg_cmd |= CRSP;
-        break;
-    case RESP_R6:
-        reg_cmd |= CRSP;
-        break;
-    case RESP_R7:
-        reg_cmd |= CRSP;
-        break;
     default:
+        reg_cmd |= CRSP;
         break;
     }
 
@@ -339,8 +338,6 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* send cmd */
     hw_sdio[SDARG3] = cmd->arg;
     hw_sdio[SDCMD]  = reg_cmd;
-
-    LOG_D("cmd->arg=0x%X reg_cmd=0x%X", cmd->arg, reg_cmd);
 
     /* wait completed */
     rthw_sdio_wait_completed(sdio);
@@ -455,7 +452,7 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
 
     if (clk > clk_src)
     {
-        LOG_W("Setting rate(%d) is greater than clock source rate(%d).", clk, clk_src);
+        // LOG_W("Setting rate(%d) is greater than clock source rate(%d).", clk, clk_src);
         // clk = clk_src;
     }
 

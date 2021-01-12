@@ -60,7 +60,7 @@
 #define HW_SDIO_CON_BUSY                        (0x01u << 20)   /*!< 0:device busy 1:device not busy                */
 
 #define HW_SDIO_ERRORS \
-    (HW_SDIO_CON_DCRCE)
+    (0)
 
 #define HW_SDIO_POWER_OFF                      (0x00U)
 #define HW_SDIO_POWER_UP                       (0x02U)
