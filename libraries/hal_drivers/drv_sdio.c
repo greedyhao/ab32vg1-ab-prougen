@@ -295,8 +295,6 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
 
     switch (resp_type(cmd))
     {
-    case RESP_NONE:
-        break;
     case RESP_R1B:
         reg_cmd |= CBUSY | CRSP;
         break;
