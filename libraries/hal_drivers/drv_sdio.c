@@ -136,7 +136,7 @@ static void rthw_sdio_wait_completed(struct rthw_sdio *sdio)
     hal_sfr_t hw_sdio = sdio->sdio_des.hw_sdio;
     rt_err_t tx_finish = -RT_ERROR;
 
-    if (rt_event_recv(&sdio->event, 0xFFFFFFFF, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+    if (rt_event_recv(&sdio->event, 0xFFFFFFFF & ~HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
                         rt_tick_from_millisecond(5000), &status) != RT_EOK)
     {
         LOG_E("wait completed timeout");
@@ -345,17 +345,26 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     /* Waiting for data to be sent to completion */
     if (data != RT_NULL)
     {
+        rt_uint32_t status = 0;
         rt_uint32_t size = data->blks * data->blksize;
         uint8_t *buf = pkg->buff;
 
         if (rt_event_recv(&sdio->event, HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-                        rt_tick_from_millisecond(5000), RT_NULL) != RT_EOK)
+                        rt_tick_from_millisecond(5000), &status) != RT_EOK)
         {
             LOG_E("wait completed timeout");
             LOG_E("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
             cmd->err = -RT_ETIMEOUT;
         }
-        LOG_D("SDCON=0x%X SDCMD=0x%X", hw_sdio[SDCON], hw_sdio[SDCMD]);
+
+        if (data->flags & DATA_DIR_WRITE) {
+            if (((hw_sdio[SDCON] & HW_SDIO_CON_CRCS) >> 17) != 2) {
+                LOG_E("Write CRC error!");
+                cmd->err = -RT_ERROR;
+                hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+            }
+        }
+        // rt_kprintf("data txrx status:0x%08X\n", status);
 // #if DRV_DEBUG
 //         for (int i = 0; i < size; i++) {
 //             rt_kprintf("0x%x ", buf[i]);
