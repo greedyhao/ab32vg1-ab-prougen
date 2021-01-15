@@ -347,7 +347,7 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
         rt_uint32_t size = data->blks * data->blksize;
         uint8_t *buf = pkg->buff;
 
-        if (rt_event_recv(&sdio->event, HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+        if (rt_event_recv(&sdio->event, 0xFFFFFFFF & ~HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
                         rt_tick_from_millisecond(5000), &status) != RT_EOK)
         {
             LOG_E("wait completed timeout");
