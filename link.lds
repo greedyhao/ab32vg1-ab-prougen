@@ -34,9 +34,18 @@ SECTIONS
     } > init
 
     .ram1 __ram1_vma : {
+        . = ALIGN(4);
+
+        PROVIDE(__ctors_start__ = .);
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
+        PROVIDE(__ctors_end__ = .);
+
+        . = ALIGN(4);
         *components*drivers**.o(.text* .rodata*)
         *device.o(.text*)
-        . = ALIGN(32);
+        *ssd1306.o (.bss* .text* .rodata* .srodata*)
+        *ssd1306_tests.o (.text* .rodata* .srodata*)
     } > ram1 AT > flash
 
     .rti : {
@@ -61,9 +70,9 @@ SECTIONS
 
     .comm : {
         KEEP(*(.vector))
-        EXCLUDE_FILE(*components*finsh**.o *components*libc**.o *romfs.o *lib_a**.o) *(.text*)
+        EXCLUDE_FILE(*components*finsh**.o *components*libc**.o *romfs.o *lib_a**.o *ssd1306_fonts.o *eh_*.o *unwind**.o *cp-demangle.o) *(.text*)
         *finsh*shell.o (.text*)
-        EXCLUDE_FILE (*components*libc**.o *romfs.o *lib_a**.o) *(.rodata*)
+        EXCLUDE_FILE (*components*libc**.o *romfs.o *lib_a**.o *ssd1306_fonts.o *eh_*.o *unwind**.o *cp-demangle.o) *(.rodata*)
         *(.srodata*)
         *(.rela*)
         *(.data*)
