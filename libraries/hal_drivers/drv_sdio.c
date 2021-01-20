@@ -22,10 +22,9 @@
 
 static struct ab32_sdio_config sdio_config[] =
 {
-    {.instance = &SD0CON,
+    {.instance = SDMMC0_BASE,
     },
 };
-// static struct ab32_sdio sdio_obj = {0};
 static struct rt_mmcsd_host *host = RT_NULL;
 
 #define RTHW_SDIO_LOCK(_sdio)   rt_mutex_take(&(_sdio)->mutex, RT_WAITING_FOREVER)
@@ -54,8 +53,6 @@ static rt_uint8_t cache_buf[SDIO_BUFF_SIZE];
 static uint8_t sd_baud = 119;
 
 uint8_t sysclk_update_baud(uint8_t baud);
-static rt_err_t DMA_TxConfig(rt_uint32_t *src, int Size);
-static rt_err_t DMA_RxConfig(rt_uint32_t *src, int Size);
 
 static rt_uint32_t ab32_sdio_clk_get(hal_sfr_t hw_sdio)
 {
@@ -427,23 +424,15 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
 
     RTHW_SDIO_LOCK(sdio);
 
-    // if (clk < 1000000) {
-    //     sd_baud = 119;
-    // } else {
-        sd_baud = 3;
-    // }
-    // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
-
     switch (io_cfg->power_mode)
     {
     case MMCSD_POWER_OFF:
         hw_sdio[SDCON] &= ~BIT(0);
         break;
     case MMCSD_POWER_UP:
+        sd_baud = 199;
         hw_sdio[SDCON] = 0;
         rt_thread_mdelay(1);
-    //     hw_sdio[SDCON] |= BIT(0);
-    //     hw_sdio[SDCON] |= BIT(3);
 
         hw_sdio[SDCON] |= BIT(0);                 /* SD control enable */
         hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
@@ -454,18 +443,11 @@ static void rthw_sdio_iocfg(struct rt_mmcsd_host *host, struct rt_mmcsd_io_cfg *
         hal_mdelay(40);
         break;
     case MMCSD_POWER_ON:
-
-        // hw_sdio[SDCON] = 0;
-
-        // // hal_udelay(20);
-        // hw_sdio[SDCON] |= BIT(0);                 /* SD control enable */
-        // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
-        // hw_sdio[SDCON] |= BIT(3);                 /* Keep clock output */
-        // hw_sdio[SDCON] |= BIT(4);
-        // hw_sdio[SDCON] |= BIT(5);                 /* Data interrupt enable */
-
-        // hal_mdelay(40);
-        // // hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
+        if (clk == SDIO_MAX_FREQ) {
+            hw_sdio[SDCON] &= ~BIT(3);
+            sd_baud = 3;
+            hw_sdio[SDBAUD] = sysclk_update_baud(sd_baud);
+        }
         break;
     default:
         LOG_W("unknown power_mode %d", io_cfg->power_mode);
@@ -525,13 +507,11 @@ void rthw_sdio_irq_process(struct rt_mmcsd_host *host)
     if (intstatus & HW_SDIO_CON_CFLAG) {
         complete = 1;
         hw_sdio[SDCPND] = HW_SDIO_CON_CFLAG;
-        // sdio_irq_wakeup(host);
     }
 
     if (intstatus & HW_SDIO_CON_DFLAG) {
         complete = 1;
         hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
-        // sdio_irq_wakeup(host);
     }
 
     if (complete)
