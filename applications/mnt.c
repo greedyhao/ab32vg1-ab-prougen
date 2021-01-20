@@ -33,7 +33,7 @@ void sd_mount(void *parameter)
     }
 }
 
-int stm32_sdcard_mount(void)
+int ab32_sdcard_mount(void)
 {
     rt_thread_t tid;
 
@@ -49,7 +49,7 @@ int stm32_sdcard_mount(void)
     }
     return RT_EOK;
 }
-INIT_APP_EXPORT(stm32_sdcard_mount);
+INIT_APP_EXPORT(ab32_sdcard_mount);
 #endif
 
 #else

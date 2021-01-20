@@ -89,7 +89,6 @@
 #define RT_DFS_ELM_DRIVES 2
 #define RT_DFS_ELM_MAX_SECTOR_SIZE 512
 #define RT_DFS_ELM_REENTRANT
-#define RT_USING_DFS_ROMFS
 
 /* Device Drivers */
 
@@ -196,6 +195,8 @@
 
 #define BSP_USING_UART0
 #define BSP_USING_SDIO
+
+/* On-chip Peripheral Drivers */
 
 /* Board extended module Drivers */
 
