@@ -36,6 +36,7 @@ struct sdio_pkg
     struct rt_mmcsd_cmd *cmd;
     void *buff;
     rt_uint32_t flag;
+    rt_uint32_t xfer_blks;
 };
 
 struct rthw_sdio
@@ -201,15 +202,13 @@ static void rthw_sdio_transfer_by_dma(struct rthw_sdio *sdio, struct sdio_pkg *p
 
     if (data->flags & DATA_DIR_WRITE)
     {
-        LOG_D("DATA_DIR_WRITE");
-        // sdio->sdio_des.txconfig((rt_uint32_t *)buff, size);
-        DMA_TxConfig((rt_uint32_t *)buff, size);
+        LOG_D("DATA_DIR_WRITE %d", pkg->xfer_blks);
+        sdio->sdio_des.txconfig((rt_uint32_t *)((rt_uint8_t *)buff + (pkg->xfer_blks * data->blksize)), 512);
     }
     else if (data->flags & DATA_DIR_READ)
     {
-        LOG_D("DATA_DIR_READ");
-        // sdio->sdio_des.rxconfig((rt_uint32_t *)buff, size);
-        DMA_RxConfig((rt_uint32_t *)buff, size);
+        LOG_D("DATA_DIR_WRITE %d", pkg->xfer_blks);
+        sdio->sdio_des.rxconfig((rt_uint32_t *)((rt_uint8_t *)buff + (pkg->xfer_blks * data->blksize)), data->blksize);
     }
 }
 
@@ -296,43 +295,35 @@ static void rthw_sdio_send_command(struct rthw_sdio *sdio, struct sdio_pkg *pkg)
     hw_sdio[SDARG3] = cmd->arg;
     hw_sdio[SDCMD]  = reg_cmd;
 
-    /* wait completed */
+    /* wait cmd completed */
     rthw_sdio_wait_completed(sdio);
 
     /* transfer config */
-    if (data_flag & DATA_DIR_WRITE)
-    {
-        rthw_sdio_transfer_by_dma(sdio, pkg);
-    }
-
-    /* Waiting for data to be sent to completion */
     if (data != RT_NULL)
     {
-        rt_uint32_t status = 0;
-        rt_uint32_t size = data->blks * data->blksize;
-        uint8_t *buf = pkg->buff;
-
-        if (rt_event_recv(&sdio->event, 0xFFFFFFFF & ~HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-                        rt_tick_from_millisecond(5000), &status) != RT_EOK)
-        {
-            LOG_E("wait completed timeout");
-            LOG_E("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
-            cmd->err = -RT_ETIMEOUT;
-        }
-
-        if (data_flag & DATA_DIR_WRITE) {
-            if (((hw_sdio[SDCON] & HW_SDIO_CON_CRCS) >> 17) != 2) {
-                LOG_E("Write CRC error!");
-                cmd->err = -RT_ERROR;
-                hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+        do {
+            if ((data_flag & DATA_DIR_WRITE) || ((data_flag & DATA_DIR_READ) && (pkg->xfer_blks != 0))) {
+                rthw_sdio_transfer_by_dma(sdio, pkg);
             }
-        }
-// #if DRV_DEBUG
-//         for (int i = 0; i < size; i++) {
-//             rt_kprintf("0x%x ", buf[i]);
-//         }
-//         rt_kprintf("\n");
-// #endif
+
+            rt_uint32_t status = 0;
+
+            if (rt_event_recv(&sdio->event, 0xFFFFFFFF & ~HW_SDIO_CON_DFLAG, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
+                            rt_tick_from_millisecond(5000), &status) != RT_EOK)
+            {
+                LOG_E("wait completed timeout");
+                LOG_E("SDCON=0x%X SDCMD=0x%X\n", hw_sdio[SDCON], hw_sdio[SDCMD]);
+                cmd->err = -RT_ETIMEOUT;
+            }
+
+            if (data_flag & DATA_DIR_WRITE) {
+                if (((hw_sdio[SDCON] & HW_SDIO_CON_CRCS) >> 17) != 2) {
+                    LOG_E("Write CRC error!");
+                    cmd->err = -RT_ERROR;
+                    hw_sdio[SDCPND] = HW_SDIO_CON_DFLAG;
+                }
+            }
+        } while(++pkg->xfer_blks != data->blks);
     }
 
     /* clear pkg */
@@ -627,7 +618,7 @@ struct rt_mmcsd_host *sdio_host_create(struct ab32_sdio_des *sdio_des)
     return host;
 }
 
-static rt_err_t DMA_TxConfig(rt_uint32_t *src, int Size)
+static rt_err_t _dma_txconfig(rt_uint32_t *src, int Size)
 {
     hal_sfr_t sdiox = sdio_config->instance;
 
@@ -636,7 +627,7 @@ static rt_err_t DMA_TxConfig(rt_uint32_t *src, int Size)
     return RT_EOK;
 }
 
-static rt_err_t DMA_RxConfig(rt_uint32_t *dst, int Size)
+static rt_err_t _dma_rxconfig(rt_uint32_t *dst, int Size)
 {
     hal_sfr_t sdiox = sdio_config->instance;
 
@@ -670,8 +661,8 @@ int rt_hw_sdio_init(void)
 
     sdio_des.clk_get    = ab32_sdio_clk_get;
     sdio_des.hw_sdio    = SDMMC0_BASE;
-    sdio_des.rxconfig   = DMA_RxConfig;
-    sdio_des.txconfig   = DMA_TxConfig;
+    sdio_des.rxconfig   = _dma_rxconfig;
+    sdio_des.txconfig   = _dma_txconfig;
 
     host = sdio_host_create(&sdio_des);
 
