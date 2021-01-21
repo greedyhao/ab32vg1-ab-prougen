@@ -116,6 +116,7 @@ static rt_int32_t ab32_get_scl(void *data)
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)data;
     return rt_pin_read(cfg->scl);
 }
+
 /**
  * The time delay function.
  *
@@ -127,7 +128,8 @@ static void ab32_udelay(rt_uint32_t us)
     rt_uint32_t told, tnow, tcnt = 0;
     rt_uint32_t reload = TMR0PR;
 
-    ticks = us * reload / (1000000 / RT_TICK_PER_SECOND);
+    // ticks = us * reload / (1000000 / RT_TICK_PER_SECOND);
+    ticks = us * reload * 2;
     told = TMR0CNT;
     while (1)
     {
@@ -207,7 +209,7 @@ int rt_hw_i2c_init(void)
         result = rt_i2c_bit_add_bus(&i2c_obj[i].i2c2_bus, soft_i2c_config[i].bus_name);
         RT_ASSERT(result == RT_EOK);
         ab32_i2c_bus_unlock(&soft_i2c_config[i]);
-        
+
         LOG_D("software simulation %s init done, pin scl: %d, pin sda %d",
         soft_i2c_config[i].bus_name, 
         soft_i2c_config[i].scl, 
