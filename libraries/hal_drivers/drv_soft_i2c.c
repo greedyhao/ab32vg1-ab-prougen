@@ -39,7 +39,7 @@ static const struct ab32_soft_i2c_config soft_i2c_config[] =
 #endif
 };
 
-static struct ab32_i2c i2c_obj[sizeof(soft_i2c_config) / sizeof(soft_i2c_config[0])];
+static struct ab32_i2c i2c_obj[sizeof(soft_i2c_config) / sizeof(soft_i2c_config[0])] = {0};
 
 /**
  * This function initializes the i2c pin.
@@ -50,8 +50,10 @@ static void ab32_i2c_gpio_init(struct ab32_i2c *i2c)
 {
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)i2c->ops.data;
 
-    rt_pin_mode(cfg->scl, PIN_MODE_OUTPUT_OD);
-    rt_pin_mode(cfg->sda, PIN_MODE_OUTPUT_OD);
+    cfg->scl_mode = PIN_MODE_OUTPUT_OD;
+    cfg->sda_mode = PIN_MODE_OUTPUT_OD;
+    rt_pin_mode(cfg->scl, cfg->scl_mode);
+    rt_pin_mode(cfg->sda, cfg->sda_mode);
 
     rt_pin_write(cfg->scl, PIN_HIGH);
     rt_pin_write(cfg->sda, PIN_HIGH);
@@ -66,6 +68,12 @@ static void ab32_i2c_gpio_init(struct ab32_i2c *i2c)
 static void ab32_set_sda(void *data, rt_int32_t state)
 {
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)data;
+
+    if (cfg->sda_mode == PIN_MODE_INPUT_PULLUP) {
+        cfg->sda_mode = PIN_MODE_OUTPUT_OD;
+        rt_pin_mode(cfg->sda, cfg->sda_mode);
+    }
+
     if (state)
     {
         rt_pin_write(cfg->sda, PIN_HIGH);
@@ -85,6 +93,12 @@ static void ab32_set_sda(void *data, rt_int32_t state)
 static void ab32_set_scl(void *data, rt_int32_t state)
 {
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)data;
+
+    if (cfg->scl_mode == PIN_MODE_INPUT_PULLUP) {
+        cfg->scl_mode = PIN_MODE_OUTPUT_OD;
+        rt_pin_mode(cfg->scl, cfg->scl_mode);
+    }
+
     if (state)
     {
         rt_pin_write(cfg->scl, PIN_HIGH);
@@ -103,6 +117,12 @@ static void ab32_set_scl(void *data, rt_int32_t state)
 static rt_int32_t ab32_get_sda(void *data)
 {
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)data;
+
+    if (cfg->sda_mode != PIN_MODE_INPUT_PULLUP) {
+        cfg->sda_mode = PIN_MODE_INPUT_PULLUP;
+        rt_pin_mode(cfg->sda, cfg->sda_mode);
+    }
+
     return rt_pin_read(cfg->sda);
 }
 
@@ -114,6 +134,12 @@ static rt_int32_t ab32_get_sda(void *data)
 static rt_int32_t ab32_get_scl(void *data)
 {
     struct ab32_soft_i2c_config* cfg = (struct ab32_soft_i2c_config*)data;
+
+    if (cfg->scl_mode == PIN_MODE_INPUT_PULLUP) {
+        cfg->scl_mode = PIN_MODE_INPUT_PULLUP;
+        rt_pin_mode(cfg->scl, cfg->scl_mode);
+    }
+
     return rt_pin_read(cfg->scl);
 }
 
@@ -128,8 +154,7 @@ static void ab32_udelay(rt_uint32_t us)
     rt_uint32_t told, tnow, tcnt = 0;
     rt_uint32_t reload = TMR0PR;
 
-    // ticks = us * reload / (1000000 / RT_TICK_PER_SECOND);
-    ticks = us * reload * 2;
+    ticks = us * reload / (1000 / RT_TICK_PER_SECOND);
     told = TMR0CNT;
     while (1)
     {

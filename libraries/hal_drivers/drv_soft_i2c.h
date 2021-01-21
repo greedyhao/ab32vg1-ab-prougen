@@ -20,6 +20,8 @@ struct ab32_soft_i2c_config
 {
     rt_uint8_t scl;
     rt_uint8_t sda;
+    rt_uint8_t sda_mode;
+    rt_uint8_t scl_mode;
     const char *bus_name;
 };
 
