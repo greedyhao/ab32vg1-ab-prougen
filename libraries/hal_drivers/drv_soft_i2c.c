@@ -10,7 +10,6 @@
 
 #include <board.h>
 #include "drv_soft_i2c.h"
-// #include "drv_config.h"
 
 #ifdef RT_USING_I2C
 
