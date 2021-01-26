@@ -96,6 +96,7 @@
 #define RT_PIPE_BUFSZ 512
 #define RT_USING_SERIAL
 #define RT_SERIAL_RB_BUFSZ 64
+#define RT_USING_HWTIMER
 #define RT_USING_I2C
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
@@ -199,12 +200,14 @@
 #define BSP_USING_UART0
 #define BSP_USING_SDIO
 #define BSP_USING_I2C1
-#define BSP_USING_WDT
 
 /* Notice: PE3 --> 16; PE2 --> 15 */
 
 #define BSP_I2C1_SCL_PIN 16
 #define BSP_I2C1_SDA_PIN 15
+#define BSP_USING_WDT
+#define BSP_USING_TIM
+#define BSP_USING_TIM1
 
 /* Board extended module Drivers */
 
