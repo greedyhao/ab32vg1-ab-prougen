@@ -54,8 +54,8 @@ struct ab32_hwtimer
 {
     rt_hwtimer_t time_device;
     hal_sfr_t     tim_handle;
-    irq_type tim_irqn;
     char *name;
+    irq_type tim_irqn;
 };
 
 static struct ab32_hwtimer ab32_hwtimer_obj[] =
@@ -88,13 +88,12 @@ static void timer_init(struct rt_hwtimer_device *timer, rt_uint32_t state)
     struct ab32_hwtimer *tim_device = RT_NULL;
 
     RT_ASSERT(timer != RT_NULL);
+    tim = (hal_sfr_t)timer->parent.user_data;
+
     if (state)
     {
-        tim = (hal_sfr_t )timer->parent.user_data;
         tim_device = (struct ab32_hwtimer *)timer;
 
-        prescaler_value = (uint32_t)(get_sysclk_nhz() / 10000) - 1;
-        tim[TMRxPR]            = prescaler_value;
         if (timer->info->cntmode != HWTIMER_CNTMODE_UP)
         {
             LOG_E("Only support HWTIMER_CNTMODE_UP!");
@@ -104,6 +103,9 @@ static void timer_init(struct rt_hwtimer_device *timer, rt_uint32_t state)
         tim[TMRxCON] = BIT(7);
 
         LOG_D("%s init success", tim_device->name);
+    } else {
+        /* stop timer */
+        tim[TMRxCON] = 0;
     }
 }
 
@@ -118,6 +120,7 @@ static rt_err_t timer_start(rt_hwtimer_t *timer, rt_uint32_t t, rt_hwtimer_mode_
 
     /* set tim cnt */
     tim[TMRxCNT] = 0;
+    tim[TMRxPR] = t * (get_sysclk_nhz() / timer->freq) - 1;
 
     if (opmode != HWTIMER_MODE_PERIOD)
     {
@@ -150,7 +153,6 @@ static rt_err_t timer_ctrl(rt_hwtimer_t *timer, rt_uint32_t cmd, void *arg)
 {
     hal_sfr_t tim = RT_NULL;
     rt_err_t result = RT_EOK;
-    uint32_t pclk1_doubler, pclk2_doubler;
 
     RT_ASSERT(timer != RT_NULL);
     RT_ASSERT(arg != RT_NULL);
@@ -161,14 +163,6 @@ static rt_err_t timer_ctrl(rt_hwtimer_t *timer, rt_uint32_t cmd, void *arg)
     {
     case HWTIMER_CTRL_FREQ_SET:
     {
-        rt_uint32_t freq;
-        rt_uint16_t val;
-
-        /* set timer frequence */
-        freq = *((rt_uint32_t *)arg);
-
-        val = get_sysclk_nhz() / freq;
-        tim[TMRxPR] = val - 1;
     }
     break;
     default:
@@ -189,7 +183,7 @@ static rt_uint32_t timer_counter_get(rt_hwtimer_t *timer)
 
     tim = (hal_sfr_t)timer->parent.user_data;
 
-    return tim[TMRxCNT];
+    return tim[TMRxCNT] / (get_sysclk_nhz() / timer->freq);
 }
 
 static const struct rt_hwtimer_info _info = TIM_DEV_INFO_CONFIG;
@@ -258,7 +252,7 @@ static int ab32_hwtimer_init(void)
     {
         ab32_hwtimer_obj[i].time_device.info = &_info;
         ab32_hwtimer_obj[i].time_device.ops  = &_ops;
-        if (rt_device_hwtimer_register(&ab32_hwtimer_obj[i].time_device, ab32_hwtimer_obj[i].name, &ab32_hwtimer_obj[i].tim_handle) == RT_EOK)
+        if (rt_device_hwtimer_register(&ab32_hwtimer_obj[i].time_device, ab32_hwtimer_obj[i].name, (void *)ab32_hwtimer_obj[i].tim_handle) == RT_EOK)
         {
             LOG_D("%s register success", ab32_hwtimer_obj[i].name);
         }
@@ -273,10 +267,10 @@ static int ab32_hwtimer_init(void)
     rt_hw_interrupt_install(IRQ_TMR1_VECTOR, timer1_isr, RT_NULL, "t1_isr");
 #endif
 #if defined(BSP_USING_TIM2) || defined(BSP_USING_TIM4) || defined(BSP_USING_TIM5)
-    rt_hw_interrupt_install(IRQ_TMR2_4_5_VECTOR, timer2_4_5_isr, RT_NULL, "ut_isr");
+    rt_hw_interrupt_install(IRQ_TMR2_4_5_VECTOR, timer2_4_5_isr, RT_NULL, "t245_isr");
 #endif
 #ifdef BSP_USING_TIM3
-    rt_hw_interrupt_install(IRQ_IRRX_VECTOR, timer3_isr, RT_NULL, "ut_isr");
+    rt_hw_interrupt_install(IRQ_IRRX_VECTOR, timer3_isr, RT_NULL, "t3_isr");
 #endif
 
     return result;
