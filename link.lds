@@ -84,7 +84,7 @@ SECTIONS
         EXCLUDE_FILE(*lib_a**.o *unwind*.o) *(.srodata)
         *(.rela*)
         *(.data*)
-	    *(.sdata*)
+        *(.sdata*)
     } > comm AT > flash
 
     .bss (NOLOAD):
