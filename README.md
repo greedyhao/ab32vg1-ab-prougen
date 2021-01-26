@@ -46,6 +46,7 @@ ab32vg1-prougen 是 中科蓝讯(Bluetrum) 推出的一款基于 RISC-V 内核�
 | RTC          |   即将支持   |             |
 | WDT          |     支持     |             |
 | FLASH        |   即将支持   |             |
+| TIMER        |     支持     |             |
 | PWM          |   即将支持   |             |
 | USB Device   |   暂不支持   |             |
 | USB Host     |   暂不支持   |             |
