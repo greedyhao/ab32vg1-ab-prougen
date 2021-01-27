@@ -37,6 +37,8 @@
  * 2020-07-29     Meco Man     fix thread->event_set/event_info when received an 
  *                             event without pending
  * 2020-10-11     Meco Man     add value overflow-check code
+ * 2021-01-03     Meco Man     add rt_mb_urgent()
+ * 2021-01-20     hupu         fix priority inversion bug of mutex
  */
 
 #include <rtthread.h>
@@ -188,6 +190,31 @@ rt_inline rt_err_t rt_ipc_list_resume_all(rt_list_t *list)
     }
 
     return RT_EOK;
+}
+
+/**
+ * This function will get the highest priority from the specified
+ * list of threads
+ *
+ * @param list of the threads
+ *
+ * @return the highest priority
+ */
+rt_uint8_t rt_ipc_get_highest_priority(rt_list_t *list)
+{
+    struct rt_list_node *n;
+    struct rt_thread *sthread;
+    rt_uint8_t priority = RT_THREAD_PRIORITY_MAX - 1;
+
+    for (n = list->next; n != list; n = n->next)
+    {
+        sthread = rt_list_entry(n, struct rt_thread, tlist);
+
+        priority = priority < sthread->current_priority ?
+                    priority :
+                    sthread->current_priority;
+    }
+    return priority;
 }
 
 #ifdef RT_USING_SEMAPHORE
@@ -828,6 +855,7 @@ rt_err_t rt_mutex_release(rt_mutex_t mutex)
     register rt_base_t temp;
     struct rt_thread *thread;
     rt_bool_t need_schedule;
+    rt_uint8_t max_priority_in_queue = RT_THREAD_PRIORITY_MAX - 1;
 
     /* parameter check */
     RT_ASSERT(mutex != RT_NULL);
@@ -888,6 +916,22 @@ rt_err_t rt_mutex_release(rt_mutex_t mutex)
             /* set new owner and priority */
             mutex->owner             = thread;
             mutex->original_priority = thread->current_priority;
+
+            /* Priority adjustment occurs only when the following conditions
+             * are met simultaneously:
+             * 1.The type of mutex is RT_IPC_FLAG_FIFO;
+             * 2.The priority of the thread to be resumed is not equal to the
+             *   highest priority in the queue;
+             */
+            max_priority_in_queue = rt_ipc_get_highest_priority(&mutex->parent.suspend_thread);
+            if (mutex->parent.parent.flag == RT_IPC_FLAG_FIFO &&
+                thread->current_priority != max_priority_in_queue)
+            {
+                rt_thread_control(thread,
+                        RT_THREAD_CTRL_CHANGE_PRIORITY,
+                        &(max_priority_in_queue));
+            }
+
             if(mutex->hold < RT_MUTEX_HOLD_MAX)
             {
                 mutex->hold ++;
@@ -1533,7 +1577,6 @@ rt_err_t rt_mb_send_wait(rt_mailbox_t mb,
     if (mb->entry == mb->size && timeout == 0)
     {
         rt_hw_interrupt_enable(temp);
-
         return -RT_EFULL;
     }
 
@@ -1655,6 +1698,71 @@ rt_err_t rt_mb_send(rt_mailbox_t mb, rt_ubase_t value)
 RTM_EXPORT(rt_mb_send);
 
 /**
+ * This function will send an urgent mail to mailbox object, if there are threads
+ * suspended on mailbox object, it will be waked up. This function will return
+ * immediately.
+ *
+ * @param mb the mailbox object
+ * @param value the mail
+ *
+ * @return the error code
+ */
+rt_err_t rt_mb_urgent(rt_mailbox_t mb, rt_ubase_t value)
+{
+    register rt_ubase_t temp;
+
+    /* parameter check */
+    RT_ASSERT(mb != RT_NULL);
+    RT_ASSERT(rt_object_get_type(&mb->parent.parent) == RT_Object_Class_MailBox);
+
+    RT_OBJECT_HOOK_CALL(rt_object_put_hook, (&(mb->parent.parent)));
+
+    /* disable interrupt */
+    temp = rt_hw_interrupt_disable();
+
+    if (mb->entry == mb->size)
+    {
+        rt_hw_interrupt_enable(temp);
+        return -RT_EFULL;
+    }
+
+    /* rewind to the previous position */
+    if (mb->out_offset > 0)
+    {
+        mb->out_offset --;
+    }
+    else
+    {
+        mb->out_offset = mb->size - 1;
+    }
+
+    /* set ptr */
+    mb->msg_pool[mb->out_offset] = value;
+
+    /* increase message entry */
+    mb->entry ++;
+
+    /* resume suspended thread */
+    if (!rt_list_isempty(&mb->parent.suspend_thread))
+    {
+        rt_ipc_list_resume(&(mb->parent.suspend_thread));
+
+        /* enable interrupt */
+        rt_hw_interrupt_enable(temp);
+
+        rt_schedule();
+
+        return RT_EOK;
+    }
+
+    /* enable interrupt */
+    rt_hw_interrupt_enable(temp);
+
+    return RT_EOK;
+}
+RTM_EXPORT(rt_mb_urgent);
+
+/**
  * This function will receive a mail from mailbox object, if there is no mail
  * in mailbox object, the thread shall wait for a specified time.
  *
@@ -1764,8 +1872,12 @@ rt_err_t rt_mb_recv(rt_mailbox_t mb, rt_ubase_t *value, rt_int32_t timeout)
     ++ mb->out_offset;
     if (mb->out_offset >= mb->size)
         mb->out_offset = 0;
+
     /* decrease message entry */
-    mb->entry --;
+    if(mb->entry > 0)
+    {
+        mb->entry --;
+    }
 
     /* resume suspended thread */
     if (!rt_list_isempty(&(mb->suspend_sender_thread)))
@@ -2439,7 +2551,10 @@ rt_err_t rt_mq_recv(rt_mq_t    mq,
         mq->msg_queue_tail = RT_NULL;
 
     /* decrease message entry */
-    mq->entry --;
+    if(mq->entry > 0)
+    {
+        mq->entry --;
+    }
 
     /* enable interrupt */
     rt_hw_interrupt_enable(temp);
