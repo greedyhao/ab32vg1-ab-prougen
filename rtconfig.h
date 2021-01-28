@@ -102,6 +102,7 @@
 #define RT_USING_I2C
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
+#define RT_USING_PWM
 #define RT_USING_SDIO
 #define RT_SDIO_STACK_SIZE 512
 #define RT_SDIO_THREAD_PRIORITY 15
@@ -207,6 +208,9 @@
 
 #define BSP_I2C1_SCL_PIN 16
 #define BSP_I2C1_SDA_PIN 15
+#define BSP_USING_PWM
+#define BSP_USING_T4_PWM
+#define BSP_USING_T4_PWM1
 #define BSP_USING_WDT
 #define BSP_USING_TIM
 #define BSP_USING_TIM1
