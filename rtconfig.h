@@ -103,6 +103,7 @@
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
 #define RT_USING_PWM
+#define RT_USING_RTC
 #define RT_USING_SDIO
 #define RT_SDIO_STACK_SIZE 512
 #define RT_SDIO_THREAD_PRIORITY 15
@@ -214,6 +215,7 @@
 #define BSP_USING_WDT
 #define BSP_USING_TIM
 #define BSP_USING_TIM1
+#define BSP_USING_ONCHIP_RTC
 
 /* Board extended module Drivers */
 

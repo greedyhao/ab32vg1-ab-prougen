@@ -60,7 +60,6 @@ SECTIONS
         *components*drivers**.o (.text*)
         *components.o (.text*)
         *idle.o (.text*)
-        *object.o (.text*)
     } > ram1 AT > flash
 
     .comm __comm_vma : {
