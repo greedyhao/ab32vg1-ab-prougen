@@ -68,7 +68,9 @@ SECTIONS
         EXCLUDE_FILE(*components*finsh**.o *components*libc**.o *dfs*filesystems**.o  
         *romfs.o *lib_a**.o *divdi3.o *moddi3.o *divdf3.o *muldf3.o *eqtf2.o *getf2.o
         *letf2.o *multf3.o *subtf3.o *fixtfsi.o *floatsitf.o *extenddftf2.o
-        *trunctfdf2.o *_clzsi2.o *cp-demangle.o *unwind*.o) *(.text)
+        *trunctfdf2.o *_clzsi2.o *cp-demangle.o *unwind*.o
+        *fixdfsi.o *addsf3.o *divsf3.o *eqsf2.o *gesf2.o *float*.o
+        *lesf2.o *mulsf3.o *subsf3.o *fixsfsi.o *fixunssfsi.o) *(.text)
         *finsh*shell.o (.text*)
         *(.text.unlikely)
         *(.text.startup)
