@@ -102,6 +102,7 @@
 #define RT_USING_I2C
 #define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
+#define RT_USING_ADC
 #define RT_USING_PWM
 #define RT_USING_RTC
 #define RT_USING_SDIO
@@ -216,6 +217,8 @@
 #define BSP_USING_TIM
 #define BSP_USING_TIM1
 #define BSP_USING_ONCHIP_RTC
+#define BSP_USING_ADC
+#define BSP_USING_ADC0
 
 /* Board extended module Drivers */
 
