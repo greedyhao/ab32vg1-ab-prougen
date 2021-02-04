@@ -41,16 +41,6 @@ SECTIONS
         __rt_init_end = .;
 
         . = ALIGN(4);
-        __fsymtab_start = .;
-        KEEP(*(FSymTab))
-        __fsymtab_end = .;
-
-        . = ALIGN(4);
-        __vsymtab_start = .;
-        KEEP(*(VSymTab))
-        __vsymtab_end = .;
-
-        . = ALIGN(4);
         PROVIDE(__ctors_start__ = .);
         KEEP (*(SORT(.init_array.*)))
         KEEP (*(.init_array))
@@ -108,6 +98,17 @@ SECTIONS
     } > heap
 
     .flash : {
+        
+        . = ALIGN(4);
+        __fsymtab_start = .;
+        KEEP(*(FSymTab))
+        __fsymtab_end = .;
+
+        . = ALIGN(4);
+        __vsymtab_start = .;
+        KEEP(*(VSymTab))
+        __vsymtab_end = .;
+
         *(.text*)
         *(.rodata*)
         *(.srodata*)
