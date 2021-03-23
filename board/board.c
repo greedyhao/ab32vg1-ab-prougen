@@ -18,9 +18,6 @@ void rt_soft_isr(int vector, void *param);
 void cpu_irq_comm(void);
 void set_cpu_irq_comm(void (*irq_hook)(void));
 extern uint32_t __heap_start, __heap_end;
-extern volatile rt_uint8_t rt_interrupt_nest;
-
-struct rt_mutex mutex_spiflash = {0};
 
 void hal_printf(const char *fmt, ...)
 {
@@ -109,7 +106,6 @@ void rt_hw_board_init(void)
 {
     WDT_DIS();
     rt_hw_systick_init();
-    rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
 
 #ifdef RT_USING_HEAP
     rt_system_heap_init(&__heap_start, &__heap_end);
@@ -130,6 +126,21 @@ void rt_hw_board_init(void)
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
 #endif
+}
+
+typedef void (*os_cache_setfunc_func)(void *load_cache_func, void *io_read);
+typedef void (*spiflash_init_func)(uint8_t sf_read, uint8_t dummy);
+
+#define os_cache_setfunc        ((os_cache_setfunc_func) 0x84024)
+void load_cache();
+
+static struct rt_mutex mutex_spiflash = {0};
+extern volatile rt_uint8_t rt_interrupt_nest;
+
+void cache_init(void)
+{
+    os_cache_setfunc(load_cache, NULL);
+    rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
 }
 
 void os_spiflash_lock(void)

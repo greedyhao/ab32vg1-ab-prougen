@@ -37,6 +37,8 @@ _start:
     la      a2, __bss_size
     call    memset
 
+    call    cache_init
+
     la      a0, __comm_vma
     sw      a0, PICADR(zero)
 
