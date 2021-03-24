@@ -381,6 +381,7 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
     return RT_EOK;
 }
 
+void print_r(void *buf, uint32_t size);
 rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, void *readBuf, rt_size_t size)
 {
     static int cnt = 0;
@@ -397,13 +398,17 @@ rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, vo
     // if (AUBUFFIFOCNT <= (AUBUFSIZE >> 16)) rt_kprintf("Y");
     // rt_kprintf("1<%d %d %d>\n", AUBUFCON & BIT(4), AUBUFFIFOCNT, AUBUFSIZE >> 16);
 
-    while (tmp_size-- > 0) {
-        while(AUBUFCON & BIT(8)); // aubuf full
-        if (cnt < 5) rt_kprintf("%d ", ((const uint32_t *)writeBuf)[count]);
-        AUBUFDATA = ((const uint32_t *)writeBuf)[count++];
+    if (cnt < 3) {
+        print_r((void *)writeBuf, size);
+        // rt_kprintf("\n");
     }
     cnt++;
     if (cnt >= 65534) cnt = 0;
+
+    while (tmp_size-- > 0) {
+        while(AUBUFCON & BIT(8)); // aubuf full
+        AUBUFDATA = ((const uint32_t *)writeBuf)[count++];
+    }
 
     // AUBUFCON |= BIT(1);
     // rt_kprintf("2<%d %d %d>\n", AUBUFCON & BIT(4), AUBUFFIFOCNT, AUBUFSIZE >> 16);
