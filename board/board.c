@@ -139,6 +139,10 @@ extern volatile rt_uint8_t rt_interrupt_nest;
 
 void cache_init(void)
 {
+    GPIOAFEN &= ~(BIT(0) | BIT(1) | BIT(2));
+    GPIOADE |= (BIT(0) | BIT(1) | BIT(2));
+    GPIOADIR &= ~(BIT(0) | BIT(1) | BIT(2));
+    
     os_cache_setfunc(load_cache, NULL);
     rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
 }

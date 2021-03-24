@@ -383,6 +383,7 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
 
 rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, void *readBuf, rt_size_t size)
 {
+    static int cnt = 0;
     struct sound_device *snd_dev = RT_NULL;
     rt_size_t tmp_size = size / 4;
     rt_size_t count = 0;
@@ -390,11 +391,24 @@ rt_size_t sound_transmit(struct rt_audio_device *audio, const void *writeBuf, vo
     RT_ASSERT(audio != RT_NULL); 
     snd_dev = (struct sound_device *)audio->parent.user_data;
 
+    GPIOASET = BIT(0);
+    AUBUFCON |= BIT(1);
+    // rt_kprintf("<%d>", size);
+    // if (AUBUFFIFOCNT <= (AUBUFSIZE >> 16)) rt_kprintf("Y");
+    // rt_kprintf("1<%d %d %d>\n", AUBUFCON & BIT(4), AUBUFFIFOCNT, AUBUFSIZE >> 16);
+
     while (tmp_size-- > 0) {
         while(AUBUFCON & BIT(8)); // aubuf full
+        if (cnt < 5) rt_kprintf("%d ", ((const uint32_t *)writeBuf)[count]);
         AUBUFDATA = ((const uint32_t *)writeBuf)[count++];
     }
+    cnt++;
+    if (cnt >= 65534) cnt = 0;
 
+    // AUBUFCON |= BIT(1);
+    // rt_kprintf("2<%d %d %d>\n", AUBUFCON & BIT(4), AUBUFFIFOCNT, AUBUFSIZE >> 16);
+    GPIOACLR = BIT(0);
+ 
     return size; 
 }
 
@@ -434,6 +448,7 @@ void audio_isr(int vector, void *param)
     rt_interrupt_enter();
 
     //Audio buffer pend
+    // if ((AUBUFFIFOCNT <= (AUBUFSIZE >> 16)) && (AUBUFCON & BIT(5))) {
     if (AUBUFCON & BIT(5)) {
         AUBUFCON |= BIT(1);         //Audio Buffer Pend Clear
         rt_audio_tx_complete(&snd_dev.audio);
