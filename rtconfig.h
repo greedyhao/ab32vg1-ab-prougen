@@ -99,11 +99,8 @@
 #define RT_USING_SERIAL
 #define RT_SERIAL_RB_BUFSZ 64
 #define RT_USING_HWTIMER
-#define RT_USING_I2C
-#define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
 #define RT_USING_ADC
-#define RT_USING_PWM
 #define RT_USING_RTC
 #define RT_USING_SDIO
 #define RT_SDIO_STACK_SIZE 512
@@ -182,6 +179,9 @@
 
 #define SDIO_MAX_FREQ 24000000
 
+/* AI packages */
+
+
 /* miscellaneous packages */
 
 
@@ -196,29 +196,12 @@
 /* Onboard Peripheral Drivers */
 
 #define BSP_USING_USB_TO_USART
-#define BSP_USING_AUDIO
-#define BSP_USING_AUDIO_PLAY
 #define BSP_USING_SDCARD
 
 /* On-chip Peripheral Drivers */
 
 #define BSP_USING_UART0
 #define BSP_USING_SDIO
-#define BSP_USING_I2C1
-
-/* Notice: PE3 --> 16; PE2 --> 15 */
-
-#define BSP_I2C1_SCL_PIN 16
-#define BSP_I2C1_SDA_PIN 15
-#define BSP_USING_PWM
-#define BSP_USING_T4_PWM
-#define BSP_USING_T4_PWM1
-#define BSP_USING_WDT
-#define BSP_USING_TIM
-#define BSP_USING_TIM1
-#define BSP_USING_ONCHIP_RTC
-#define BSP_USING_ADC
-#define BSP_USING_ADC0
 
 /* Board extended module Drivers */
 
