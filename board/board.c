@@ -64,7 +64,7 @@ void hal_printf(const char *fmt, ...)
     va_end(args);
 }
 
-SECTION(".irq.timer")
+RT_SECTION(".irq.timer")
 void timer0_isr(int vector, void *param)
 {
     rt_interrupt_enter();
@@ -138,7 +138,7 @@ void rt_hw_board_init(void)
 #endif
 }
 
-SECTION(".irq.cache")
+RT_SECTION(".irq.cache")
 void cache_init(void)
 {
     GPIOAFEN &= ~(BIT(0) | BIT(1) | BIT(2));
@@ -150,7 +150,7 @@ void cache_init(void)
     rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
 }
 
-SECTION(".irq.cache")
+RT_SECTION(".irq.cache")
 void os_spiflash_lock(void)
 {
     GPIOASET = BIT(0);
@@ -160,7 +160,7 @@ void os_spiflash_lock(void)
     }
 }
 
-SECTION(".irq.cache")
+RT_SECTION(".irq.cache")
 void os_spiflash_unlock(void)
 {
     // if (rt_thread_self()->stat == RT_THREAD_RUNNING) {

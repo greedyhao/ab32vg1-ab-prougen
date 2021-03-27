@@ -128,7 +128,7 @@ static int ab32_putc(struct rt_serial_device *serial, char ch)
     return 1;
 }
 
-SECTION(".irq.usart")
+RT_SECTION(".irq.usart")
 static int ab32_getc(struct rt_serial_device *serial)
 {
     int ch;
@@ -152,7 +152,7 @@ static rt_size_t ab32_dma_transmit(struct rt_serial_device *serial, rt_uint8_t *
 
 extern struct finsh_shell *shell;
 
-SECTION(".irq.usart")
+RT_SECTION(".irq.usart")
 static rt_err_t shell_rx_ind(void)
 {
     RT_ASSERT(shell != RT_NULL);
@@ -163,7 +163,7 @@ static rt_err_t shell_rx_ind(void)
     return RT_EOK;
 }
 
-SECTION(".irq.usart")
+RT_SECTION(".irq.usart")
 void uart_irq_process(struct rt_serial_device *serial)
 {
     int ch = -1;
@@ -215,7 +215,7 @@ void uart_irq_process(struct rt_serial_device *serial)
     }
 }
 
-SECTION(".irq.usart")
+RT_SECTION(".irq.usart")
 static void uart_isr(int vector, void *param)
 {
     rt_interrupt_enter();
