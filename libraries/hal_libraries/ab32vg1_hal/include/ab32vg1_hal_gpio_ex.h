@@ -73,6 +73,8 @@
 #define LPWM1MAP_AF             (20u)
 #define LPWM0MAP_AF             (16u)
 
+#define CLKOMAP_AF              ( 0u)
+
 /**
  * TMR5:
  * G1: PE1 PE2 PE3

@@ -91,6 +91,7 @@
 #define RT_DFS_ELM_DRIVES 2
 #define RT_DFS_ELM_MAX_SECTOR_SIZE 512
 #define RT_DFS_ELM_REENTRANT
+#define RT_USING_DFS_DEVFS
 
 /* Device Drivers */
 
@@ -119,7 +120,7 @@
 
 /* POSIX layer and C standard library */
 
-#define RT_USING_LIBC
+#define RT_LIBC_USING_TIME
 
 /* Network */
 
@@ -188,20 +189,23 @@
 /* samples: kernel and components samples */
 
 
-/* games: games run on RT-Thread console */
+/* entertainment: terminal games and other interesting software packages */
 
 
 /* Hardware Drivers Config */
 
 /* Onboard Peripheral Drivers */
 
-#define BSP_USING_USB_TO_USART
 #define BSP_USING_SDCARD
 
 /* On-chip Peripheral Drivers */
 
+#define BSP_USING_UART
 #define BSP_USING_UART0
 #define BSP_USING_SDIO
+#define BSP_USING_WDT
+#define BSP_USING_ONCHIP_RTC
+#define RTC_USING_INTERNAL_CLK
 
 /* Board extended module Drivers */
 

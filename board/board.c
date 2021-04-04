@@ -13,11 +13,13 @@
 
 int rt_hw_usart_init(void);
 void my_printf(const char *format, ...);
+void my_print_r(const void *buf, uint16_t cnt);
 void timer0_cfg(uint32_t ticks);
 void rt_soft_isr(int vector, void *param);
 void cpu_irq_comm(void);
 void set_cpu_irq_comm(void (*irq_hook)(void));
 void load_cache();
+void sys_error_hook(uint8_t err_no);
 
 typedef void (*os_cache_setfunc_func)(void *load_cache_func, void *io_read);
 typedef void (*spiflash_init_func)(uint8_t sf_read, uint8_t dummy);
@@ -141,11 +143,6 @@ void rt_hw_board_init(void)
 RT_SECTION(".irq.cache")
 void cache_init(void)
 {
-    GPIOAFEN &= ~(BIT(0) | BIT(1) | BIT(2));
-    GPIOADE |= (BIT(0) | BIT(1) | BIT(2));
-    GPIOADIR &= ~(BIT(0) | BIT(1) | BIT(2));
-    GPIOA &= 0x7;
-
     os_cache_setfunc(load_cache, NULL);
     rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
 }
@@ -153,7 +150,6 @@ void cache_init(void)
 RT_SECTION(".irq.cache")
 void os_spiflash_lock(void)
 {
-    GPIOASET = BIT(0);
     // if (rt_thread_self()->stat == RT_THREAD_RUNNING) {
     if ((rt_thread_self() != RT_NULL) && (rt_interrupt_nest == 0)) {
         rt_mutex_take(&mutex_spiflash, RT_WAITING_FOREVER);
@@ -167,5 +163,17 @@ void os_spiflash_unlock(void)
     if ((rt_thread_self() != RT_NULL) && (rt_interrupt_nest == 0)) {
         rt_mutex_release(&mutex_spiflash);
     }
-    GPIOACLR = BIT(0);
+}
+
+/**
+ * @brief print exception error
+ * @note Every message needed to print, must put in .comm exction.
+ *       You should use my_printf or my_print_r instead of rt_printf.
+ */
+RT_SECTION(".irq.err")
+void exception_isr(void)
+{
+    sys_error_hook(1);
+
+    while(1);
 }

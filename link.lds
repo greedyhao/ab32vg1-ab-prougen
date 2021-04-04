@@ -55,14 +55,14 @@ SECTIONS
         *components*drivers*watchdog**.o(.text*)
         
         . = ALIGN(4);
-        *src*ipc.o (.text .rodata)
-        *src*irq.o (.text .rodata)
-        *src*object.o (.text .rodata)
-        *src*thread.o (.text .rodata)
-        *src*timer.o (.text .rodata)
-        *src*mempool.o (.text .rodata)
-        *src*scheduler.o (.text .rodata)
-        *src*clock.o (.text .rodata)
+        *src*ipc.o (.text* .rodata*)
+        *src*irq.o (.text* .rodata*)
+        *src*object.o (.text* .rodata*)
+        *src*thread.o (.text* .rodata*)
+        *src*timer.o (.text* .rodata*)
+        *src*mempool.o (.text* .rodata*)
+        *src*scheduler.o (.text* .rodata*)
+        *src*clock.o (.text* .rodata*)
     } > ram1 AT > flash
 
     .comm __comm_vma : {
@@ -74,12 +74,17 @@ SECTIONS
         *libcpu*cpu*interrupt.o (.text .rodata)
         *hal_libraries*ab32vg1_hal**.o (.text .rodata)
         *save-restore.o (.text .rodata)
-        *drv_irq.o (.text* .rodata*)
         *(.text.unlikely)
         *(.text.startup)
-        EXCLUDE_FILE (*components*libc**.o *dfs*filesystems**.o *romfs.o *lib_a**.o 
-        *cp-demangle.o *divdf3.o *muldf3.o *multf3.o *unwind*.o *_clz.o) *(.rodata)
-        EXCLUDE_FILE(*lib_a**.o *cp-demangle.o *cp-demangle.o) *(.rodata.str1.4)
+        *src*kservice.o (.text* .rodata*)
+        *src*device.o (.text* .rodata*)
+        *hal_drivers**.o (.rodata)
+        *audio*drv_sound.o (.rodata)
+        *libcpu**.o (.rodata)
+        *system_ab32vgx.o (.rodata)
+        EXCLUDE_FILE(*lib_a**.o *cp-demangle.o *cp-demangle.o 
+        *src*mem.o *src*memheap.o *dfs**.o *components.o *drivers*sdio**.o *cmd.o *msh_file.o
+        *drv_sdio.o *drv_wdt.o) *(.rodata.str1.4)
         EXCLUDE_FILE(*lib_a**.o *unwind*.o) *(.srodata)
         *(.rela*)
         *(.data*)
