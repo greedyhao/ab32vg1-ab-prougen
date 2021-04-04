@@ -185,6 +185,7 @@ static const struct rt_hwtimer_ops _ops =
 };
 
 #if defined(BSP_USING_TIM2) || defined(BSP_USING_TIM4) || defined(BSP_USING_TIM5)
+RT_SECTION(".irq.timer")
 void timer2_4_5_isr(int vector, void *param)
 {
     rt_interrupt_enter();
@@ -211,6 +212,7 @@ void timer2_4_5_isr(int vector, void *param)
 #endif
 
 #ifdef BSP_USING_TIM3
+RT_SECTION(".irq.timer")
 void timer3_isr(int vector, void *param)
 {
     rt_interrupt_enter();
@@ -221,6 +223,7 @@ void timer3_isr(int vector, void *param)
 #endif
 
 #ifdef BSP_USING_TIM1
+RT_SECTION(".irq.timer")
 void timer1_isr(int vector, void *param)
 {
     rt_interrupt_enter();

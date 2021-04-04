@@ -12,7 +12,7 @@
 #include "drv_usart.h"
 #include <shell.h>
 
-#if defined(BSP_USING_UART0) || defined(BSP_USING_UART1) || defined(BSP_USING_UART2)
+#ifdef RT_USING_SERIAL
 
 //#define DRV_DEBUG
 #define LOG_TAG             "drv.usart"

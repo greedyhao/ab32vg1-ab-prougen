@@ -50,10 +50,9 @@ SECTIONS
         *components*drivers*audio**.o(.text*)
         *components*drivers*hwtimer**.o(.text*)
         *components*drivers*misc*pin.o(.text*)
-        *components*drivers*rtc**.o(.text*)
-        *components*drivers*serial**.o(.text*)
+        *components*drivers*rtc*rtc.o(.text*)
         *components*drivers*watchdog**.o(.text*)
-        
+
         . = ALIGN(4);
         *src*ipc.o (.text* .rodata*)
         *src*irq.o (.text* .rodata*)
