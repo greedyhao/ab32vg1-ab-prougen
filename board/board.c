@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, Bluetrum Development Team
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
@@ -77,16 +77,16 @@ void timer0_isr(int vector, void *param)
 
 void timer0_init(void)
 {
-	TMR0CON =  BIT(7); //TIE
-	TMR0CNT = 0;
+    TMR0CON =  BIT(7); //TIE
+    TMR0CNT = 0;
 
-	rt_hw_interrupt_install(IRQ_TMR0_VECTOR, timer0_isr, RT_NULL, "tick");
+    rt_hw_interrupt_install(IRQ_TMR0_VECTOR, timer0_isr, RT_NULL, "tick");
 }
 
 void timer0_cfg(uint32_t ticks)
 {
-	TMR0PR  = (uint32_t)(ticks - 1UL);       //1ms interrupt
-	TMR0CON |= BIT(0); // EN
+    TMR0PR  = (uint32_t)(ticks - 1UL);       //1ms interrupt
+    TMR0CON |= BIT(0); // EN
 }
 
 void hal_mdelay(uint32_t ms)
@@ -140,6 +140,11 @@ void rt_hw_board_init(void)
 #endif
 }
 
+void rt_hw_us_delay(rt_uint32_t us)
+{
+
+}
+
 RT_SECTION(".irq.cache")
 void cache_init(void)
 {
@@ -177,3 +182,4 @@ void exception_isr(void)
 
     while(1);
 }
+

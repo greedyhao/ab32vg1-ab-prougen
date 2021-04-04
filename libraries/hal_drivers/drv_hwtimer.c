@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2020-2021, Bluetrum Development Team
- * 
+ *
  * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
@@ -17,19 +17,6 @@
 #include <drv_log.h>
 
 #ifdef RT_USING_HWTIMER
-
-#define TIM_ENABLE                          BIT(0)
-#define TIM_CAPTURE_ENABLE
-#define TIM_INCREASE_CLOCK_SELECT
-#define TIM_CAPTURE_EDGE_SELECT
-#define TIM_INCREASE_SOURCE_SELECT
-#define TIM_OVERFLOW_INTERRUPT_ENABLE
-#define TIM_CAPTURE_INTERRUPT_ENABLE
-#define TIM_PWM0_ENABLE
-#define TIM_PWM1_ENABLE
-#define TIM_PWM2_ENABLE
-#define TIM_OVERFLOW_PEND
-#define TIM_CAPTURE_PEND
 
 enum
 {
