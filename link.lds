@@ -68,7 +68,7 @@ SECTIONS
         . = ALIGN(4);
         KEEP(*(.vector))
         *(.irq*)
-        *applications**.o (.text .rodata)
+        /*applications**.o (.text .rodata)*/
         *libcpu*cpu*context_gcc.o (.text .rodata)
         *libcpu*cpu*interrupt.o (.text .rodata)
         *hal_libraries*ab32vg1_hal**.o (.text .rodata)
