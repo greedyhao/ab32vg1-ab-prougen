@@ -196,6 +196,7 @@ void uart_irq_process(struct rt_serial_device *serial)
 
     while (1)
     {
+        #undef getc
         ch = serial->ops->getc(serial);
         if (ch == -1) break;
 

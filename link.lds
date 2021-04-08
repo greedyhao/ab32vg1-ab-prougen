@@ -66,25 +66,26 @@ SECTIONS
 
     .comm __comm_vma : {
         . = ALIGN(4);
-        KEEP(*(.vector))
+        KEEP(*(.vector*))
         *(.irq*)
         /*applications**.o (.text .rodata)*/
-        *libcpu*cpu*context_gcc.o (.text .rodata)
-        *libcpu*cpu*interrupt.o (.text .rodata)
-        *hal_libraries*ab32vg1_hal**.o (.text .rodata)
-        *save-restore.o (.text .rodata)
+        *libcpu*cpu*context_gcc.o (.text* .rodata*)
+        *libcpu*cpu*interrupt.o (.text* .rodata*)
+        *hal_libraries*ab32vg1_hal**.o (.text* .rodata*)
+        *save-restore.o (.text* .rodata*)
+        *save_restore.o (.text* .rodata*)
         *(.text.unlikely)
         *(.text.startup)
         *src*kservice.o (.text* .rodata*)
         *src*device.o (.text* .rodata*)
-        *hal_drivers**.o (.rodata)
-        *audio*drv_sound.o (.rodata)
-        *libcpu**.o (.rodata)
-        *system_ab32vgx.o (.rodata)
+        *hal_drivers**.o (.rodata*)
+        *audio*drv_sound.o (.rodata*)
+        *libcpu**.o (.rodata*)
+        *system_ab32vgx.o (.rodata*)
         EXCLUDE_FILE(*lib_a**.o *cp-demangle.o *cp-demangle.o 
         *src*mem.o *src*memheap.o *dfs**.o *components.o *drivers*sdio**.o *cmd.o *msh_file.o
-        *drv_sdio.o *drv_wdt.o) *(.rodata.str1.4)
-        EXCLUDE_FILE(*lib_a**.o *unwind*.o) *(.srodata)
+        *drv_sdio.o *drv_wdt.o) *(.rodata.str1.4*)
+        EXCLUDE_FILE(*lib_a**.o *unwind*.o) *(.srodata*)
         *(.rela*)
         *(.data*)
         *(.sdata*)

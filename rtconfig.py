@@ -15,7 +15,8 @@ if os.getenv('RTT_CC'):
 
 if  CROSS_TOOL == 'gcc':
     PLATFORM    = 'gcc'
-    EXEC_PATH   = r'D:/program_files/programming/RT-ThreadStudio/repo/Extract/ToolChain_Support_Packages/RISC-V/RISC-V-GCC/10.1.0/bin'
+    # EXEC_PATH   = r'D:/program_files/programming/RT-ThreadStudio/repo/Extract/ToolChain_Support_Packages/RISC-V/RISC-V-GCC/10.1.0/bin'
+    EXEC_PATH   = r'D:/program_files/programming/toolchains/RV32-Toolchain/RV32-V2/bin'
 else:
     print('Please make sure your toolchains is GNU GCC!')
     exit(0)
@@ -27,23 +28,28 @@ BUILD = 'release'
 
 if PLATFORM == 'gcc':
     # toolchains
-    PREFIX  = 'riscv64-unknown-elf-'
+    # PREFIX  = 'riscv64-unknown-elf-'
+    PREFIX  = 'riscv32-elf-'
     CC      = PREFIX + 'gcc'
     CXX     = PREFIX + 'g++'
     AS      = PREFIX + 'gcc'
     AR      = PREFIX + 'ar'
-    LINK    = PREFIX + 'gcc'
+    # LINK    = PREFIX + 'gcc'
+    LINK    = PREFIX + 'ld'
     TARGET_EXT = 'elf'
     SIZE    = PREFIX + 'size'
     OBJDUMP = PREFIX + 'objdump'
     OBJCPY  = PREFIX + 'objcopy'
 
     # DEVICE  = ' -mcmodel=medany -march=rv32imc -mabi=ilp32 -fsingle-precision-constant'
-    DEVICE  = ' -mcmodel=medany -march=rv32imc -mabi=ilp32'
+    # DEVICE  = ' -mcmodel=medany -march=rv32imc -mabi=ilp32'
+    DEVICE  = ' -march=rv32imac -msave-restore -ffunction-sections'
+    # DEVICE  = ' -march=rv32imac'
     # CFLAGS  = DEVICE + ' -fno-common -ffunction-sections -fdata-sections -fstrict-volatile-bitfields'
     CFLAGS = DEVICE + ' -D_USE_LONG_TIME_T'
     AFLAGS  = ' -c' + DEVICE + ' -x assembler-with-cpp'
-    LFLAGS  = DEVICE + ' -nostartfiles -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,_start -T link.lds'
+    # LFLAGS  = DEVICE + ' -nostartfiles -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,_start -T link.lds'
+    LFLAGS  = ' --gc-sections -Map=rtthread.map -Tlink.lds'
     CPATH   = ''
     LPATH   = ''
 
@@ -56,7 +62,8 @@ if PLATFORM == 'gcc':
     CXXFLAGS = CFLAGS
 
 DUMP_ACTION = OBJDUMP + ' -D -S $TARGET > rtt.asm\n'
-POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
+# POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
+POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n'
 POST_ACTION += './riscv32-elf-xmaker -b rtthread.xm\n'
 POST_ACTION += './riscv32-elf-xmaker -b download.xm\n'
 
