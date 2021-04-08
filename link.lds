@@ -47,11 +47,8 @@ SECTIONS
         PROVIDE(__ctors_end__ = .);
 
         . = ALIGN(4);
-        *components*drivers*audio**.o(.text*)
         *components*drivers*hwtimer**.o(.text*)
         *components*drivers*misc*pin.o(.text*)
-        *components*drivers*rtc*rtc.o(.text*)
-        *components*drivers*watchdog**.o(.text*)
 
         . = ALIGN(4);
         *src*ipc.o (.text* .rodata*)
@@ -62,6 +59,7 @@ SECTIONS
         *src*mempool.o (.text* .rodata*)
         *src*scheduler.o (.text* .rodata*)
         *src*clock.o (.text* .rodata*)
+        *src*kservice.o (.text* .rodata*)
     } > ram1 AT > flash
 
     .comm __comm_vma : {
@@ -72,11 +70,12 @@ SECTIONS
         *libcpu*cpu*context_gcc.o (.text .rodata)
         *libcpu*cpu*interrupt.o (.text .rodata)
         *hal_libraries*ab32vg1_hal**.o (.text .rodata)
-        *save-restore.o (.text .rodata)
+        *save-restore.o (.text* .rodata*)
         *(.text.unlikely)
         *(.text.startup)
-        *src*kservice.o (.text* .rodata*)
         *src*device.o (.text* .rodata*)
+        *src*idle.o (.text* .rodata*)
+        *src*components.o (.text* .rodata*)
         *hal_drivers**.o (.rodata)
         *audio*drv_sound.o (.rodata)
         *libcpu**.o (.rodata)
