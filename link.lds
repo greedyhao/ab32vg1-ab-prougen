@@ -47,7 +47,11 @@ SECTIONS
         PROVIDE(__ctors_end__ = .);
 
         . = ALIGN(4);
-        *components*drivers*hwtimer**.o(.text*)
+        *save-restore.o (.text* .rodata*)
+        *libcpu*cpu*context_gcc.o (.text* .rodata*)
+        *libcpu*cpu*interrupt.o (.text* .rodata*)
+        *libcpu**.o (.rodata*)
+
         *components*drivers*misc*pin.o(.text*)
 
         . = ALIGN(4);
@@ -60,6 +64,9 @@ SECTIONS
         *src*scheduler.o (.text* .rodata*)
         *src*clock.o (.text* .rodata*)
         *src*kservice.o (.text* .rodata*)
+        *src*device.o (.text* .rodata*)
+        *src*idle.o (.text* .rodata*)
+        *src*components.o (.text* .rodata*)
     } > ram1 AT > flash
 
     .comm __comm_vma : {
@@ -67,18 +74,11 @@ SECTIONS
         KEEP(*(.vector))
         *(.irq*)
         /*applications**.o (.text .rodata)*/
-        *libcpu*cpu*context_gcc.o (.text .rodata)
-        *libcpu*cpu*interrupt.o (.text .rodata)
         *hal_libraries*ab32vg1_hal**.o (.text .rodata)
-        *save-restore.o (.text* .rodata*)
         *(.text.unlikely)
         *(.text.startup)
-        *src*device.o (.text* .rodata*)
-        *src*idle.o (.text* .rodata*)
-        *src*components.o (.text* .rodata*)
         *hal_drivers**.o (.rodata)
         *audio*drv_sound.o (.rodata)
-        *libcpu**.o (.rodata)
         *system_ab32vgx.o (.rodata)
         EXCLUDE_FILE(*lib_a**.o *cp-demangle.o *cp-demangle.o 
         *src*mem.o *src*memheap.o *dfs**.o *components.o *drivers*sdio**.o *cmd.o *msh_file.o

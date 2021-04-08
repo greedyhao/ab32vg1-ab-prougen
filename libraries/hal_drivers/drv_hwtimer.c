@@ -68,6 +68,37 @@ static struct ab32_hwtimer ab32_hwtimer_obj[] =
 #endif
 };
 
+RT_SECTION(".irq.timer")
+static void _rt_device_hwtimer_isr(rt_hwtimer_t *timer)
+{
+    RT_ASSERT(timer != RT_NULL);
+
+    timer->overflow ++;
+
+    if (timer->cycles != 0)
+    {
+        timer->cycles --;
+    }
+
+    if (timer->cycles == 0)
+    {
+        timer->cycles = timer->reload;
+
+        if (timer->mode == HWTIMER_MODE_ONESHOT)
+        {
+            if (timer->ops->stop != RT_NULL)
+            {
+                timer->ops->stop(timer);
+            }
+        }
+
+        if (timer->parent.rx_indicate != RT_NULL)
+        {
+            timer->parent.rx_indicate(&timer->parent, sizeof(struct rt_hwtimerval));
+        }
+    }
+}
+
 static void timer_init(struct rt_hwtimer_device *timer, rt_uint32_t state)
 {
     uint32_t prescaler_value = 0;
@@ -192,19 +223,19 @@ void timer2_4_5_isr(int vector, void *param)
 #ifdef BSP_USING_TIM2
     if (ab32_hwtimer_obj[TIM2_INDEX].tim_handle[TMRxCON] != 0) {
         ab32_hwtimer_obj[TIM2_INDEX].tim_handle[TMRxCPND] = BIT(9);
-        rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM2_INDEX].time_device);
+        _rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM2_INDEX].time_device);
     }
 #endif
 #ifdef BSP_USING_TIM4
     if (ab32_hwtimer_obj[TIM4_INDEX].tim_handle[TMRxCON] != 0) {
         ab32_hwtimer_obj[TIM4_INDEX].tim_handle[TMRxCPND] = BIT(9);
-        rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM4_INDEX].time_device);
+        _rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM4_INDEX].time_device);
     }
 #endif
 #ifdef BSP_USING_TIM5
     if (ab32_hwtimer_obj[TIM5_INDEX].tim_handle[TMRxCON] != 0) {
         ab32_hwtimer_obj[TIM5_INDEX].tim_handle[TMRxCPND] = BIT(9);
-        rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM5_INDEX].time_device);
+        _rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM5_INDEX].time_device);
     }
 #endif
     rt_interrupt_leave();
@@ -217,7 +248,7 @@ void timer3_isr(int vector, void *param)
 {
     rt_interrupt_enter();
     ab32_hwtimer_obj[TIM3_INDEX].tim_handle[TMRxCPND] = BIT(9);
-    rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM3_INDEX].time_device);
+    _rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM3_INDEX].time_device);
     rt_interrupt_leave();
 }
 #endif
@@ -228,7 +259,7 @@ void timer1_isr(int vector, void *param)
 {
     rt_interrupt_enter();
     ab32_hwtimer_obj[TIM1_INDEX].tim_handle[TMRxCPND] = BIT(9);
-    rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM1_INDEX].time_device);
+    _rt_device_hwtimer_isr(&ab32_hwtimer_obj[TIM1_INDEX].time_device);
     rt_interrupt_leave();
 }
 #endif
