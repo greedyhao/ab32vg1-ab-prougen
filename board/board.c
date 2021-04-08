@@ -170,16 +170,19 @@ void os_spiflash_unlock(void)
     }
 }
 
+RT_SECTION(".irq.err.str")
+static const char stack_info[] = "thread->sp=0x%x";
+
 /**
  * @brief print exception error
  * @note Every message needed to print, must put in .comm exction.
- *       You should use my_printf or my_print_r instead of rt_printf.
+ *       You should use my_printf or my_print_r instead of rt_printf in exception_isr.
  */
 RT_SECTION(".irq.err")
 void exception_isr(void)
 {
     sys_error_hook(1);
+    my_printf(stack_info, rt_thread_self()->sp);
 
     while(1);
 }
-
