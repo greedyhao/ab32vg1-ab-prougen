@@ -171,18 +171,25 @@ void os_spiflash_unlock(void)
 }
 
 RT_SECTION(".irq.err.str")
-static const char stack_info[] = "thread->sp=0x%x";
+static const char stack_info[] = "thread sp=0x%x name=%s";
+
+void rt_hw_console_output(const char *str)
+{
+    my_printf(str);
+}
 
 /**
  * @brief print exception error
  * @note Every message needed to print, must put in .comm exction.
- *       You should use my_printf or my_print_r instead of rt_printf in exception_isr.
  */
 RT_SECTION(".irq.err")
 void exception_isr(void)
 {
+    extern long list_thread(void);
     sys_error_hook(1);
-    my_printf(stack_info, rt_thread_self()->sp);
+
+    rt_console_set_device(RT_NULL);
+    rt_kprintf(stack_info, rt_thread_self()->sp, rt_thread_self()->name);
 
     while(1);
 }

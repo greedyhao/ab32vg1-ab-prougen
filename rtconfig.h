@@ -106,7 +106,6 @@
 #define RT_USING_ADC
 #define RT_USING_PWM
 #define RT_USING_RTC
-#define RT_USING_ALARM
 #define RT_USING_SDIO
 #define RT_SDIO_STACK_SIZE 512
 #define RT_SDIO_THREAD_PRIORITY 15
@@ -115,16 +114,16 @@
 #define RT_MMCSD_MAX_PARTITION 16
 #define RT_USING_WDT
 #define RT_USING_AUDIO
-#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 1024
+#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 4096
 #define RT_AUDIO_REPLAY_MP_BLOCK_COUNT 2
-#define RT_AUDIO_RECORD_PIPE_SIZE 512
+#define RT_AUDIO_RECORD_PIPE_SIZE 2048
 
 /* Using USB */
 
 
 /* POSIX layer and C standard library */
 
-#define RT_LIBC_USING_TIME
+#define RT_USING_LIBC
 
 /* Network */
 
