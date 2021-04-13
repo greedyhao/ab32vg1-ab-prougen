@@ -224,6 +224,8 @@
 #define RTC_USING_INTERNAL_CLK
 #define BSP_USING_ADC
 #define BSP_USING_ADC0
+#define BSP_USING_IRRX
+#define BSP_USING_IRRX_HW
 
 /* Board extended module Drivers */
 
