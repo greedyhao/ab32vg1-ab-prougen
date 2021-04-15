@@ -13,8 +13,9 @@
 #define DBG_LVL              DBG_INFO
 #include <rtdbg.h>
 
-#define SAI_AUDIO_FREQUENCY_44K         ((uint32_t)44100u)
 #define SAI_AUDIO_FREQUENCY_48K         ((uint32_t)48000u)
+#define SAI_AUDIO_FREQUENCY_44K         ((uint32_t)44100u)
+#define SAI_AUDIO_FREQUENCY_38K         ((uint32_t)38000u)
 #define TX_FIFO_SIZE                    (1024)
 
 struct sound_device
@@ -120,16 +121,15 @@ void audio_sem_pend(void)
 
 void saia_frequency_set(uint32_t frequency)
 {
+    DACDIGCON0 &= ~(0xf << 2);
     if (frequency == SAI_AUDIO_FREQUENCY_48K) {
-        DACDIGCON0 |= BIT(1);
-        DACDIGCON0 &= ~(0xf << 2);
-        DACDIGCON0 |= BIT(6);
+        DACDIGCON0 |= (0 << 2);
     } else if (frequency == SAI_AUDIO_FREQUENCY_44K) {
-        DACDIGCON0 &= ~BIT(1);
-        DACDIGCON0 &= ~(0xf << 2);
-        DACDIGCON0 |= BIT(1);
-        DACDIGCON0 |= BIT(6);
+        DACDIGCON0 |= (1 << 2);
+    } else if (frequency == SAI_AUDIO_FREQUENCY_38K) {
+        DACDIGCON0 |= (2 << 2);
     }
+    DACDIGCON0 |= BIT(6);
 }
 
 void saia_channels_set(uint8_t channels)
@@ -349,6 +349,7 @@ static rt_err_t sound_init(struct rt_audio_device *audio)
     /* set default params */
     saia_frequency_set(snd_dev->replay_config.samplerate);
     saia_channels_set(snd_dev->replay_config.channels);
+    saia_volume_set(snd_dev->volume);
 
     return RT_EOK;
 }
@@ -368,9 +369,7 @@ static rt_err_t sound_start(struct rt_audio_device *audio, int stream)
         AUBUFSIZE       |= (TX_FIFO_SIZE / 8) << 16;
         AUBUFSTARTADDR  = DMA_ADR(snd_dev->rx_fifo);
 
-        DACDIGCON0  = BIT(0) | BIT(10); // (0x01<<2)
-        DACVOLCON   = 0x7fff; // -60DB
-        DACVOLCON  |= BIT(20);
+        DACDIGCON0  |= BIT(0) | BIT(10); // (0x01<<2)
 
         AUBUFCON |= BIT(1);
     }
@@ -387,6 +386,7 @@ static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
 
     if (stream == AUDIO_STREAM_REPLAY)
     {
+        DACDIGCON0 = 0;
         AUBUFCON &= ~BIT(4);
         LOG_D("close sound device");
     }
@@ -506,7 +506,7 @@ static int rt_hw_sound_init(void)
         RT_NULL,
         1024,
         20, // must equal or lower than tshell priority
-        5
+        1
     );
 
     if (snd_dev.thread != RT_NULL)
@@ -516,7 +516,7 @@ static int rt_hw_sound_init(void)
 
     /* init default configuration */
     {
-        snd_dev.replay_config.samplerate = 48000;
+        snd_dev.replay_config.samplerate = SAI_AUDIO_FREQUENCY_48K;
         snd_dev.replay_config.channels   = 2;
         snd_dev.replay_config.samplebits = 16;
         snd_dev.volume                   = 55;
