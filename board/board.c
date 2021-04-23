@@ -20,6 +20,7 @@ void cpu_irq_comm(void);
 void set_cpu_irq_comm(void (*irq_hook)(void));
 void load_cache();
 void sys_error_hook(uint8_t err_no);
+void debug_set();
 
 typedef void (*os_cache_setfunc_func)(void *load_cache_func, void *io_read);
 typedef void (*spiflash_init_func)(uint8_t sf_read, uint8_t dummy);
@@ -170,7 +171,7 @@ void os_spiflash_unlock(void)
     }
 }
 
-RT_SECTION(".irq.err.str")
+RT_SECTION(".irq.debug.str")
 static const char stack_info[] = "thread sp=0x%x name=%s";
 
 void rt_hw_console_output(const char *str)
@@ -182,7 +183,7 @@ void rt_hw_console_output(const char *str)
  * @brief print exception error
  * @note Every message needed to print, must put in .comm exction.
  */
-RT_SECTION(".irq.err")
+RT_SECTION(".irq.debug")
 void exception_isr(void)
 {
     extern long list_thread(void);
@@ -193,3 +194,15 @@ void exception_isr(void)
 
     while(1);
 }
+
+RT_SECTION(".irq.debug")
+uint8_t os_get_interrupt_nest(void)
+{
+    return rt_interrupt_nest;
+}
+
+static int init_debug(void)
+{
+    debug_set();
+}
+INIT_APP_EXPORT(init_debug);
