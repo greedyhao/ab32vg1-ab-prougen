@@ -19,15 +19,13 @@ void rt_soft_isr(int vector, void *param);
 void cpu_irq_comm(void);
 void set_cpu_irq_comm(void (*irq_hook)(void));
 void load_cache();
+void os_cache_init(void);
 void sys_error_hook(uint8_t err_no);
-void debug_set();
 
-typedef void (*os_cache_setfunc_func)(void *load_cache_func, void *io_read);
 typedef void (*spiflash_init_func)(uint8_t sf_read, uint8_t dummy);
 
-#define os_cache_setfunc        ((os_cache_setfunc_func) 0x84024)
-
 static struct rt_mutex mutex_spiflash = {0};
+static struct rt_mutex mutex_cache = {0};
 extern volatile rt_uint8_t rt_interrupt_nest;
 extern uint32_t __heap_start, __heap_end;
 
@@ -149,8 +147,9 @@ void rt_hw_us_delay(rt_uint32_t us)
 RT_SECTION(".irq.cache")
 void cache_init(void)
 {
-    os_cache_setfunc(load_cache, NULL);
+    os_cache_init();
     rt_mutex_init(&mutex_spiflash, "flash_mutex", RT_IPC_FLAG_FIFO);
+    rt_mutex_init(&mutex_cache, "cache_mutex", RT_IPC_FLAG_FIFO);
 }
 
 RT_SECTION(".irq.cache")
@@ -171,7 +170,25 @@ void os_spiflash_unlock(void)
     }
 }
 
-RT_SECTION(".irq.debug.str")
+RT_SECTION(".irq.cache")
+void os_cache_lock(void)
+{
+    // if (rt_thread_self()->stat == RT_THREAD_RUNNING) {
+    if ((rt_thread_self() != RT_NULL) && (rt_interrupt_nest == 0)) {
+        rt_mutex_take(&mutex_cache, RT_WAITING_FOREVER);
+    }
+}
+
+RT_SECTION(".irq.cache")
+void os_cache_unlock(void)
+{
+    // if (rt_thread_self()->stat == RT_THREAD_RUNNING) {
+    if ((rt_thread_self() != RT_NULL) && (rt_interrupt_nest == 0)) {
+        rt_mutex_release(&mutex_cache);
+    }
+}
+
+RT_SECTION(".irq.err.str")
 static const char stack_info[] = "thread sp=0x%x name=%s";
 
 void rt_hw_console_output(const char *str)
@@ -183,7 +200,7 @@ void rt_hw_console_output(const char *str)
  * @brief print exception error
  * @note Every message needed to print, must put in .comm exction.
  */
-RT_SECTION(".irq.debug")
+RT_SECTION(".irq.err")
 void exception_isr(void)
 {
     extern long list_thread(void);
@@ -194,15 +211,3 @@ void exception_isr(void)
 
     while(1);
 }
-
-RT_SECTION(".irq.debug")
-uint8_t os_get_interrupt_nest(void)
-{
-    return rt_interrupt_nest;
-}
-
-static int init_debug(void)
-{
-    debug_set();
-}
-INIT_APP_EXPORT(init_debug);
