@@ -23,10 +23,11 @@ struct sound_device
     struct rt_audio_device audio;
     struct rt_audio_configure replay_config;
     rt_sem_t    semaphore;
-    rt_thread_t thread; 
+    rt_thread_t thread;
     rt_uint8_t *tx_fifo;
     rt_uint8_t *rx_fifo;
     rt_uint8_t  volume;
+    rt_uint8_t  dma_to_aubuf;
 };
 
 static struct sound_device snd_dev = {0};
@@ -271,6 +272,10 @@ static rt_err_t sound_configure(struct rt_audio_device *audio, struct rt_audio_c
             break;
         }
 
+        case AUDIO_MIXER_EXTEND:
+            snd_dev->dma_to_aubuf = caps->udata.value;
+        break;
+
         default:
             result = -RT_ERROR;
             break;
@@ -379,10 +384,7 @@ static rt_err_t sound_start(struct rt_audio_device *audio, int stream)
 
 static rt_err_t sound_stop(struct rt_audio_device *audio, int stream)
 {
-    struct sound_device *snd_dev = RT_NULL;
-
     RT_ASSERT(audio != RT_NULL);
-    snd_dev = (struct sound_device *)audio->parent.user_data;
 
     if (stream == AUDIO_STREAM_REPLAY)
     {
@@ -463,7 +465,7 @@ static void audio_thread_entry(void *parameter)
 {
     while (1)
     {
-        if (snd_dev.audio.replay->activated == RT_TRUE) {
+        if ((snd_dev.dma_to_aubuf == RT_FALSE) && (snd_dev.audio.replay->activated == RT_TRUE)) {
             rt_audio_tx_complete(&snd_dev.audio);
         } else {
             rt_thread_mdelay(50);
